@@ -298,9 +298,9 @@ await fetch('/api/animals', {
 - [x] Sistem de mesagerie între utilizatori  
 - [x] Implementare flux RSS  
 - [x] Documentație API cu Swagger
-- [ ] Aplicație mobilă  
-- [ ] Notificări push
-- [ ] Integrare cu servicii de plăți
+- [x] Aplicație mobilă  
+- [x] Notificări push
+- [x] Sistem RSS 
 
 ---
 
