@@ -1,0 +1,105 @@
+@startuml
+entity Users {
+  * userID : int <<PK>>
+  --
+  firstName : string
+  lastName : string
+  email : string <<UNIQUE>>
+  password : string
+  phone : string
+  createdAt : date
+}
+
+entity Admins {
+  * adminData : AdminObject
+}
+
+entity Address {
+  * addressID : int <<PK>>
+  --
+  userID : int <<FK>> <<UNIQUE>>
+  Street : string
+  City : string
+  State : string
+  ZipCode : int
+  Country : string
+}
+
+entity Animal {
+  * animalID : int <<PK>>
+  --
+  userID : int <<FK>>
+  name : string
+  breed : string
+  species : string
+  age : number
+  views : number
+  gender : Enum [male, female]
+  createdAt : date
+}
+
+entity MedicalHistory {
+  * id : int <<PK>>
+  --
+  animalID : int <<FK>>
+  vetNumber : string
+  recordDate : date
+  description : string
+  first_aid_noted : string
+}
+
+entity FeedingSchedule {
+  * id : int <<PK>>
+  --
+  animalID : int <<FK>> <<UNIQUE>>
+  feeding_time : feeding_time_array
+  food_type : string
+  notes : string
+}
+
+entity MultiMedia {
+  * id : int <<PK>>
+  --
+  animalID : int <<FK>>
+  media : Enum [photo, video, audio]
+  url : string
+  description : string
+  upload_date : date
+}
+
+entity Relations {
+  * id : int <<PK>>
+  --
+  animalID : int <<FK>> <<UNIQUE>>
+  friendWith : string
+}
+
+entity Messages {
+  * messageId : int <<PK>>
+  --
+  senderId : int <<FK>>
+  receiverId : int <<FK>>
+  content : string
+  timestamp : date
+  isRead : number
+}
+
+entity Newsletter {
+  * id : int <<PK>>
+  --
+  userID : int <<FK>>
+  species : string
+  isActive : number
+  subscribedAt : date
+}
+
+' Relationships
+Users "1" -- "1" Address : has
+Users "1" -- "0..*" Animal : owns
+Animal "1" -- "0..*" MedicalHistory : has
+Animal "1" -- "0..1" FeedingSchedule : has
+Animal "1" -- "0..*" MultiMedia : has
+Animal "1" -- "0..1" Relations : has
+Users "1" -- "0..*" Messages : sends
+Users "1" -- "0..*" Newsletter : subscribes
+@enduml

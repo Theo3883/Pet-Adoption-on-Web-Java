@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!--  security headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://localhost:3000; connect-src 'self' http://localhost:3000">
+    <meta name="csrf-token" id="csrf-token">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    
+    <title>My Animals</title>
+    <link rel="stylesheet" href="../Home/Home.css">
+    <link rel="stylesheet" href="../SideBar/Sidebar.css">
+    <link rel="stylesheet" href="User_Animals.css">
+  <!-- Load shared mobile styles -->
+  <link rel="stylesheet" href="../utils/mobileStyles.css">
+</head>
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+        
+        <main class="main-content">
+            <h1 class="page-title">My Animals</h1>
+            <div id="my-animals-container" class="cards-container">
+                <!-- Dynamic loading will be handled by JavaScript -->
+            </div>
+        </main>
+    </div>
+    
+    <script type="module" src="../SideBar/Sidebar.js"></script>
+    <script type="module" src="User_Animals.js"></script>
+    <script type="module" src="../utils/globalSecurity.js"></script>
+</body>
+</html>

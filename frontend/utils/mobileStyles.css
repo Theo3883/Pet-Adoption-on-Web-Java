@@ -1,0 +1,187 @@
+/* Shared mobile styles for all pages */
+@media screen and (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+
+  .main-content {
+    margin-left: 0;
+    padding: 15px;
+    padding-bottom: 70px; 
+    will-change: transform;
+  }
+
+  .form-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 15px;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px; 
+  }
+
+  /* Button styles */
+  .btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    margin: 10px 0;
+  }
+
+  /* Grid layouts */
+  .grid-container {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  /* Card styles */
+  .card {
+    margin-bottom: 10px;
+    contain: content;
+    transform: translateZ(0);
+  }
+
+  .card img {
+    height: 150px;
+    transform: translateZ(0);
+  }
+
+  .card-content {
+    padding: 0.8rem;
+  }
+
+  .card-content h2 {
+    font-size: 1rem;
+  }
+
+  .card-content p {
+    font-size: 0.9rem;
+    margin: 0.3rem 0;
+  }
+
+  /* Table styles */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    font-size: 14px;
+  }
+
+  /* Message styles */
+  .message-container {
+    padding: 10px;
+  }
+
+  .message-content {
+    padding: 10px;
+  }
+
+  /* Newsletter styles */
+  .newsletter-container {
+    padding: 15px;
+  }
+
+  .newsletter-form {
+    width: 100%;
+  }
+
+  /* Popular page styles */
+  .popular-container {
+    padding: 15px;
+  }
+
+  .popular-stats {
+    flex-direction: column;
+  }
+
+  /* User Animals page styles */
+  .user-animals-container {
+    padding: 15px;
+  }
+
+  .animal-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  /* Publish page styles */
+  .publish-container {
+    padding: 15px;
+  }
+
+  .image-upload-container {
+    flex-direction: column;
+  }
+
+  /* Messages page styles */
+  .messages-container {
+    padding: 15px;
+  }
+
+  .message-list {
+    margin-bottom: 60px;
+  }
+
+  /* Admin page styles */
+  .admin-container {
+    padding: 15px;
+  }
+
+  .admin-stats {
+    grid-template-columns: 1fr;
+  }
+
+  /* Common utility classes */
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  .show-on-mobile {
+    display: block !important;
+  }
+
+  /* Touch-friendly elements */
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent text size adjustment */
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+}
+
+/* Additional styles for very small screens */
+@media screen and (max-width: 360px) {
+  .main-content {
+    padding: 10px;
+  }
+
+  .card-content h2 {
+    font-size: 0.9rem;
+  }
+
+  .card-content p {
+    font-size: 0.8rem;
+  }
+
+  .btn {
+    padding: 10px;
+    font-size: 14px;
+  }
+} 

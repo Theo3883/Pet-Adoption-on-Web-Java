@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <title>Popular Pets</title>
+  
+  <!--  security headers -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://localhost:3000; connect-src 'self' http://localhost:3000">
+  <meta name="csrf-token" id="csrf-token">
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  
+  <link rel="dns-prefetch" href="http://localhost:3000">
+  
+  <!-- Inline critical CSS -->
+  <style>
+    body, html {
+      height: 100%;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+      background-color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .main-content {
+      margin-left: 290px;
+      flex: 1;
+      padding: 30px;
+    }
+    
+    .cards-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .loader {
+      text-align: center;
+      color: #888;
+      padding: 20px;
+    }
+  </style>
+  
+  <!-- Remove inline event handlers for stylesheet loading -->
+  <link rel="preload" href="Popular.css" as="style">
+  <noscript><link rel="stylesheet" href="Popular.css"></noscript>
+  
+  <link rel="preload" href="../SideBar/Sidebar.css" as="style">
+  <noscript><link rel="stylesheet" href="../SideBar/Sidebar.css"></noscript>
+  
+  <link rel="preload" href="../AnimalCard/AnimalCard.css" as="style">
+  <noscript><link rel="stylesheet" href="../AnimalCard/AnimalCard.css"></noscript>
+  
+  <script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const styleSheets = [
+        document.querySelector('link[href="Popular.css"]'),
+        document.querySelector('link[href="../SideBar/Sidebar.css"]'),
+        document.querySelector('link[href="../AnimalCard/AnimalCard.css"]')
+      ];
+      
+      styleSheets.forEach(styleSheet => {
+        if (styleSheet) {
+          styleSheet.rel = 'stylesheet';
+        }
+      });
+    });
+  </script>
+  
+  <link rel="stylesheet" href="../utils/mobileStyles.css">
+</head>
+<body>
+  <div class="app-container">
+    <div id="sidebar-container"></div>
+    
+    <main class="main-content">
+      <div id="species-filters"></div>
+      <div id="animal-cards-container" class="cards-container">
+        <div class="loader">Loading animals...</div>
+      </div>
+    </main>
+  </div>
+  
+  <script type="module" src="Popular.js"></script>
+  <script type="module" src="../utils/globalSecurity.js"></script>
+</body>
+</html>

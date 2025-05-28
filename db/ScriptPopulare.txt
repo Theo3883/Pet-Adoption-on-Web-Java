@@ -1,0 +1,382 @@
+BEGIN
+    -- Inserare Admins 
+    INSERT INTO Admins (adminData)
+    VALUES (AdminObject(1, 'admin@petadoption.com', 'admin123', SYSDATE-60));
+    
+    INSERT INTO Admins (adminData)
+    VALUES (AdminObject(2, 'moderator@petadoption.com', 'mod456', SYSDATE-45));
+
+    -- Inserare Users (20 users)
+    DECLARE
+        v_first_names VARCHAR2(1000) := 'Andrei,Maria,George,Ana,Alexandru,Elena,Mihai,Ioana,Daniel,Cristina,Robert,Andreea,Florin,Laura,Adrian,Simona,Gabriel,Raluca,Ionut,Diana';
+        v_last_names VARCHAR2(1000) := 'Popescu,Ionescu,Vasilescu,Marinescu,Dumitrescu,Constantinescu,Popa,Radu,Stan,Gheorghe,Munteanu,Costea,Diaconu,Dobre,Barbu,Nistor,Moldovan,Tudor,Neagu,Georgescu';
+        v_cities VARCHAR2(1000) := 'Bucuresti,Cluj-Napoca,Timisoara,Iasi,Constanta,Brasov,Galati,Craiova,Ploiesti,Oradea,Braila,Arad,Sibiu,Bacau,Pitesti,Targu Mures,Suceava,Deva,Alba Iulia,Buzau';
+        v_states VARCHAR2(1000) := 'Ilfov,Cluj,Timis,Iasi,Constanta,Brasov,Galati,Dolj,Prahova,Bihor,Braila,Arad,Sibiu,Bacau,Arges,Mures,Suceava,Hunedoara,Alba,Buzau';
+        
+        TYPE name_array IS TABLE OF VARCHAR2(100);
+        v_first_names_arr name_array := name_array();
+        v_last_names_arr name_array := name_array();
+        v_cities_arr name_array := name_array();
+        v_states_arr name_array := name_array();
+        
+        v_name VARCHAR2(100);
+        v_last_name VARCHAR2(100);
+        v_city VARCHAR2(100);
+        v_state VARCHAR2(100);
+        v_idx PLS_INTEGER;
+        v_start_idx PLS_INTEGER := 1;
+    BEGIN
+        -- Split the comma-separated values into arrays
+        LOOP
+            v_idx := INSTR(v_first_names, ',', v_start_idx);
+            EXIT WHEN v_idx = 0;
+            v_first_names_arr.EXTEND;
+            v_first_names_arr(v_first_names_arr.COUNT) := SUBSTR(v_first_names, v_start_idx, v_idx - v_start_idx);
+            v_start_idx := v_idx + 1;
+        END LOOP;
+        v_first_names_arr.EXTEND;
+        v_first_names_arr(v_first_names_arr.COUNT) := SUBSTR(v_first_names, v_start_idx);
+        
+        v_start_idx := 1;
+        LOOP
+            v_idx := INSTR(v_last_names, ',', v_start_idx);
+            EXIT WHEN v_idx = 0;
+            v_last_names_arr.EXTEND;
+            v_last_names_arr(v_last_names_arr.COUNT) := SUBSTR(v_last_names, v_start_idx, v_idx - v_start_idx);
+            v_start_idx := v_idx + 1;
+        END LOOP;
+        v_last_names_arr.EXTEND;
+        v_last_names_arr(v_last_names_arr.COUNT) := SUBSTR(v_last_names, v_start_idx);
+        
+        v_start_idx := 1;
+        LOOP
+            v_idx := INSTR(v_cities, ',', v_start_idx);
+            EXIT WHEN v_idx = 0;
+            v_cities_arr.EXTEND;
+            v_cities_arr(v_cities_arr.COUNT) := SUBSTR(v_cities, v_start_idx, v_idx - v_start_idx);
+            v_start_idx := v_idx + 1;
+        END LOOP;
+        v_cities_arr.EXTEND;
+        v_cities_arr(v_cities_arr.COUNT) := SUBSTR(v_cities, v_start_idx);
+        
+        v_start_idx := 1;
+        LOOP
+            v_idx := INSTR(v_states, ',', v_start_idx);
+            EXIT WHEN v_idx = 0;
+            v_states_arr.EXTEND;
+            v_states_arr(v_states_arr.COUNT) := SUBSTR(v_states, v_start_idx, v_idx - v_start_idx);
+            v_start_idx := v_idx + 1;
+        END LOOP;
+        v_states_arr.EXTEND;
+        v_states_arr(v_states_arr.COUNT) := SUBSTR(v_states, v_start_idx);
+        
+        -- Insert 20 users
+        FOR i IN 1..20 LOOP
+            -- Assign random values to variables
+            v_name := v_first_names_arr(TRUNC(DBMS_RANDOM.VALUE(1, v_first_names_arr.COUNT+1)));
+            v_last_name := v_last_names_arr(TRUNC(DBMS_RANDOM.VALUE(1, v_last_names_arr.COUNT+1)));
+            v_city := v_cities_arr(TRUNC(DBMS_RANDOM.VALUE(1, v_cities_arr.COUNT+1)));
+            v_state := v_states_arr(TRUNC(DBMS_RANDOM.VALUE(1, v_states_arr.COUNT+1)));
+            
+            INSERT INTO Users (firstName, lastName, email, password, phone, createdAt)
+            VALUES (
+                v_name,
+                v_last_name,
+                'user' || i || '@example.com',
+                'hashed_password_' || i,
+                '07' || TO_CHAR(DBMS_RANDOM.VALUE(10000000, 99999999), 'FM99999999'),
+                SYSDATE - DBMS_RANDOM.VALUE(1, 365)
+            );
+            
+            -- Insert corresponding address
+            INSERT INTO Address (userID, Street, City, State, ZipCode, Country)
+            VALUES (
+                i, 
+                'Str. ' || DBMS_RANDOM.STRING('L', 8) || ' ' || ROUND(DBMS_RANDOM.VALUE(1, 100)),
+                v_city,
+                v_state,
+                ROUND(DBMS_RANDOM.VALUE(100000, 999999)),
+                'Romania'
+            );
+        END LOOP;
+    END;
+    
+    -- Inserare Animal (100 animals)
+    DECLARE
+        TYPE name_array IS TABLE OF VARCHAR2(100);
+        
+        -- Dog names
+        v_dog_names name_array := name_array('Max', 'Charlie', 'Cooper', 'Buddy', 'Rocky', 'Bear', 'Duke', 'Milo', 'Zeus', 'Simba', 'Oscar', 'Jack', 'Murphy', 'Louie', 'Toby', 'Leo', 'Rex', 'Bruno', 'Tucker', 'Buster', 'Lucky', 'Dexter', 'Winston', 'Theo', 'Bentley', 'Diesel', 'Samson', 'Apollo', 'Gunner', 'Harley', 'Romeo', 'Finn', 'Gizmo', 'Bandit', 'Scout', 'King', 'Ace', 'Thor', 'Shadow', 'Baxter', 'Coco', 'Oreo', 'Rusty', 'Ozzy', 'Archie', 'Pepper', 'Beau', 'Moose', 'Tank', 'Rudy');
+        
+        -- Cat names
+        v_cat_names name_array := name_array('Luna', 'Bella', 'Lucy', 'Lily', 'Kitty', 'Callie', 'Chloe', 'Stella', 'Zoe', 'Lola', 'Sophie', 'Daisy', 'Mia', 'Piper', 'Nala', 'Cleo', 'Molly', 'Willow', 'Milo', 'Simba', 'Oliver', 'Leo', 'Max', 'Charlie', 'Tiger', 'Oscar', 'Shadow', 'Smokey', 'Jasper', 'Jack', 'Felix', 'Pepper', 'Gus', 'Ginger', 'Pumpkin', 'Salem', 'Mittens', 'Boots', 'Oreo', 'Finn', 'Ollie', 'Romeo', 'Binx', 'Sammy', 'Midnight', 'Boo', 'Scout', 'Rocky', 'Zeus', 'Ziggy');
+        
+        -- Dog breeds
+        v_dog_breeds name_array := name_array('Labrador Retriever', 'Golden Retriever', 'German Shepherd', 'Bulldog', 'Beagle', 'Poodle', 'Rottweiler', 'Yorkshire Terrier', 'Boxer', 'Dachshund', 'Shih Tzu', 'Great Dane', 'Doberman Pinscher', 'Border Collie', 'Siberian Husky', 'Chihuahua', 'Bichon Frise', 'Pomeranian', 'Boston Terrier', 'French Bulldog', 'Ciobănesc Românesc', 'Ciobănesc Mioritic', 'Ciobănesc Bucovina', 'Metis');
+        
+        -- Cat breeds
+        v_cat_breeds name_array := name_array('Siamese', 'Persian', 'Maine Coon', 'Ragdoll', 'Bengal', 'Abyssinian', 'British Shorthair', 'Sphynx', 'Scottish Fold', 'Burmese', 'Birman', 'Devon Rex', 'Oriental', 'Siberian', 'Egyptian Mau', 'Norwegian Forest Cat', 'American Shorthair', 'Russian Blue', 'Exotic Shorthair', 'Himalayan', 'European Shorthair', 'Metis');
+        
+        -- Vet numbers
+        v_vet_numbers name_array := name_array('VET001', 'VET002', 'VET003', 'VET004', 'VET005', 'VET006', 'VET007', 'VET008', 'VET009', 'VET010');
+        
+        -- Medical descriptions
+        v_medical_descriptions name_array := name_array(
+            'Vaccinare anuală',
+            'Tratament pentru infecție respiratorie',
+            'Vaccinare antirabică',
+            'Deparazitare internă și externă',
+            'Sterilizare',
+            'Control de rutină',
+            'Tratament pentru alergii',
+            'Tratament rană',
+            'Verificare și curățare dinți',
+            'Tratament afecțiuni cutanate',
+            'Intervenție chirurgicală minoră',
+            'Vaccinare hexavalentă',
+            'Tratament otită',
+            'Tratament dermatologic',
+            'Analize de sânge de rutină'
+        );
+        
+        -- Food types
+        v_food_types name_array := name_array('Granule', 'Hrană umedă', 'Hrană uscată', 'Conserve', 'Dietă mixtă', 'Hrană premium', 'Hrană naturală', 'Hrană dietetică', 'Hrană medicală', 'Hrană hipoalergenică');
+        
+        -- Feeding notes
+        v_feeding_notes name_array := name_array(
+            'Dimineața și seara',
+            'Trei mese pe zi',
+            'O singură masă pe zi',
+            'Hranire la cerere',
+            'Porții mici, frecvente',
+            'Necesită suplimente alimentare',
+            'Hrană specială pentru sensibilități digestive',
+            'Dieta sub supraveghere medicală',
+            'Evitați lactoza și zahărul',
+            'Include suplimente de vitamine',
+            'Necesită hidratare adecvată',
+            'Porția de seară mai consistentă',
+            'Preferă hrana încălzită',
+            'Alimentație restrictivă pentru controlul greutății',
+            'Hrană bogată în proteine'
+        );
+        
+        -- Media descriptions
+        v_media_descriptions name_array := name_array(
+            'În timpul unei plimbări în parc',
+            'Dormind liniștit pe canapea',
+            'Jucându-se cu jucăria favorită',
+            'La prima vizită la veterinar',
+            'În timpul unei sesiuni de îngrijire',
+            'Explorând în grădină',
+            'În prima zi acasă',
+            'Pozând pentru adoptare',
+            'La centrul de adopții',
+            'În timpul unei sesiuni de training',
+            'Relaxare la soare',
+            'Moment amuzant în timpul jocului',
+            'Interacțiune cu alt animal',
+            'După baie',
+            'Momente drăgălașe din somn'
+        );
+
+        -- Dog photo URLs
+        v_dog_photos name_array := name_array(
+            '/server/photo/dog1.jpeg',
+            '/server/photo/dog2.jpeg',
+            '/server/photo/dog3.jpeg',
+            '/server/photo/dog4.jpeg',
+            '/server/photo/dog5.jpeg',
+            '/server/photo/dog6.jpeg'
+        );
+        
+        -- Cat photo URLs
+        v_cat_photos name_array := name_array(
+            '/server/photo/cat1.jpeg',
+            '/server/photo/cat2.jpeg',
+            '/server/photo/cat3.jpeg',
+            '/server/photo/cat4.jpeg',
+            '/server/photo/cat5.jpeg',
+            '/server/photo/cat6.jpeg'
+        );
+        
+        v_species VARCHAR2(10);
+        v_name VARCHAR2(100);
+        v_breed VARCHAR2(100);
+        v_gender VARCHAR2(10);
+        v_user_id NUMBER;
+        v_age NUMBER;
+        v_days_ago NUMBER;
+        v_photo_url VARCHAR2(1000);
+        v_animal_id NUMBER;
+        v_friend_name VARCHAR2(100);
+        v_feeding_hour1 VARCHAR2(50);
+        v_feeding_hour2 VARCHAR2(50);
+        v_vet_number VARCHAR2(10);
+        v_medical_desc VARCHAR2(100);
+        v_food_type VARCHAR2(100);
+        v_feeding_note VARCHAR2(100);
+        v_media_desc VARCHAR2(100);
+    BEGIN
+        -- Insert 100 animals
+        FOR i IN 1..100 LOOP
+            -- Randomly select species (60% dogs, 40% cats)
+            IF DBMS_RANDOM.VALUE(0, 1) < 0.6 THEN
+                v_species := 'Câine';
+                v_name := v_dog_names(TRUNC(DBMS_RANDOM.VALUE(1, v_dog_names.COUNT+1)));
+                v_breed := v_dog_breeds(TRUNC(DBMS_RANDOM.VALUE(1, v_dog_breeds.COUNT+1)));
+                v_photo_url := v_dog_photos(TRUNC(DBMS_RANDOM.VALUE(1, v_dog_photos.COUNT+1)));
+            ELSE
+                v_species := 'Pisică';
+                v_name := v_cat_names(TRUNC(DBMS_RANDOM.VALUE(1, v_cat_names.COUNT+1)));
+                v_breed := v_cat_breeds(TRUNC(DBMS_RANDOM.VALUE(1, v_cat_breeds.COUNT+1)));
+                v_photo_url := v_cat_photos(TRUNC(DBMS_RANDOM.VALUE(1, v_cat_photos.COUNT+1)));
+            END IF;
+            
+            -- Randomly select gender
+            IF DBMS_RANDOM.VALUE(0, 1) < 0.5 THEN
+                v_gender := 'male';
+            ELSE
+                v_gender := 'female';
+            END IF;
+            
+            -- Randomly select user ID (from the 20 users created)
+            v_user_id := ROUND(DBMS_RANDOM.VALUE(1, 20));
+            
+            -- Random age between 1 month and 15 years
+            v_age := ROUND(DBMS_RANDOM.VALUE(0.1, 15) * 10) / 10;
+            
+            -- Random creation date (between 1 and 365 days ago)
+            v_days_ago := ROUND(DBMS_RANDOM.VALUE(1, 365));
+            
+            -- Medical, feeding, media, friend variables
+            v_vet_number := v_vet_numbers(TRUNC(DBMS_RANDOM.VALUE(1, v_vet_numbers.COUNT+1)));
+            v_medical_desc := v_medical_descriptions(TRUNC(DBMS_RANDOM.VALUE(1, v_medical_descriptions.COUNT+1)));
+            v_food_type := v_food_types(TRUNC(DBMS_RANDOM.VALUE(1, v_food_types.COUNT+1)));
+            v_feeding_note := v_feeding_notes(TRUNC(DBMS_RANDOM.VALUE(1, v_feeding_notes.COUNT+1)));
+            v_media_desc := v_media_descriptions(TRUNC(DBMS_RANDOM.VALUE(1, v_media_descriptions.COUNT+1)));
+            
+            -- Insert animal
+            INSERT INTO Animal (userID, name, breed, species, age, gender, createdAt)
+            VALUES (v_user_id, v_name, v_breed, v_species, v_age, v_gender, SYSDATE - v_days_ago);
+            
+            -- Get the generated animal ID
+            SELECT seq_animal.CURRVAL INTO v_animal_id FROM DUAL;
+            
+            -- Insert medical history for 80% of animals
+            IF DBMS_RANDOM.VALUE(0, 1) < 0.8 THEN
+                INSERT INTO MedicalHistory (animalID, vetNumber, recordDate, description, first_aid_noted)
+                VALUES (
+                    v_animal_id, 
+                    v_vet_number,
+                    SYSDATE - ROUND(DBMS_RANDOM.VALUE(1, 180)),
+                    v_medical_desc,
+                    CASE WHEN DBMS_RANDOM.VALUE(0, 1) < 0.3 THEN 'Da' ELSE 'Nu' END
+                );
+            END IF;
+            
+            -- Insert feeding schedule for 90% of animals
+            IF DBMS_RANDOM.VALUE(0, 1) < 0.9 THEN
+                -- Generate random feeding hours
+                v_feeding_hour1 := TO_CHAR(TRUNC(DBMS_RANDOM.VALUE(6, 10))) || ':' || 
+                                  TO_CHAR(TRUNC(DBMS_RANDOM.VALUE(0, 59)), 'FM00') || ':00';
+                                  
+                v_feeding_hour2 := TO_CHAR(TRUNC(DBMS_RANDOM.VALUE(17, 21))) || ':' || 
+                                  TO_CHAR(TRUNC(DBMS_RANDOM.VALUE(0, 59)), 'FM00') || ':00';
+                
+                INSERT INTO FeedingSchedule (animalID, feeding_time, food_type, notes)
+                VALUES (
+                    v_animal_id,
+                    feeding_time_array(
+                        TO_TIMESTAMP(v_feeding_hour1, 'HH24:MI:SS'),
+                        TO_TIMESTAMP(v_feeding_hour2, 'HH24:MI:SS')
+                    ),
+                    v_food_type,
+                    v_feeding_note
+                );
+            END IF;
+            
+            -- Insert multimedia (photo)
+            INSERT INTO MultiMedia (animalID, media, url, description, upload_date)
+            VALUES (
+                v_animal_id,
+                'photo',
+                v_photo_url,
+                v_media_desc,
+                SYSDATE - ROUND(DBMS_RANDOM.VALUE(0, v_days_ago))
+            );
+            
+            -- Insert relations for 65% of animals
+            IF DBMS_RANDOM.VALUE(0, 1) < 0.65 THEN
+                -- Choose a friend name that's not the same as this animal
+                LOOP
+                    IF v_species = 'Câine' THEN
+                        v_friend_name := v_dog_names(TRUNC(DBMS_RANDOM.VALUE(1, v_dog_names.COUNT+1)));
+                    ELSE
+                        v_friend_name := v_cat_names(TRUNC(DBMS_RANDOM.VALUE(1, v_cat_names.COUNT+1)));
+                    END IF;
+                    EXIT WHEN v_friend_name != v_name;
+                END LOOP;
+                INSERT INTO Relations (animalID, friendWith)
+                VALUES (v_animal_id, v_friend_name);
+            END IF;
+            
+            -- Add a second photo for 40% of animals
+            IF DBMS_RANDOM.VALUE(0, 1) < 0.4 THEN
+                IF v_species = 'Câine' THEN
+                    v_photo_url := v_dog_photos(TRUNC(DBMS_RANDOM.VALUE(1, v_dog_photos.COUNT+1)));
+                ELSE
+                    v_photo_url := v_cat_photos(TRUNC(DBMS_RANDOM.VALUE(1, v_cat_photos.COUNT+1)));
+                END IF;
+                v_media_desc := v_media_descriptions(TRUNC(DBMS_RANDOM.VALUE(1, v_media_descriptions.COUNT+1)));
+                INSERT INTO MultiMedia (animalID, media, url, description, upload_date)
+                VALUES (
+                    v_animal_id,
+                    'photo',
+                    v_photo_url,
+                    v_media_desc,
+                    SYSDATE - ROUND(DBMS_RANDOM.VALUE(0, v_days_ago))
+                );
+            END IF;
+            
+            -- Add a video for 15% of animals
+            IF DBMS_RANDOM.VALUE(0, 1) < 0.15 THEN
+                v_media_desc := v_media_descriptions(TRUNC(DBMS_RANDOM.VALUE(1, v_media_descriptions.COUNT+1)));
+                INSERT INTO MultiMedia (animalID, media, url, description, upload_date)
+                VALUES (
+                    v_animal_id,
+                    'video',
+                    '/server/video/' || DBMS_RANDOM.STRING('L', 10) || '.mp4',
+                    'Video cu ' || v_name || ' ' || v_media_desc,
+                    SYSDATE - ROUND(DBMS_RANDOM.VALUE(0, v_days_ago))
+                );
+            END IF;
+        END LOOP;
+    END;
+    
+    INSERT INTO Users (firstName, lastName, email, password, phone, createdAt)
+    VALUES ('Andrei', 'Popescu', 'andrei.popescu@example.com', 'hashed_password_123', '0755123456', SYSDATE-30);
+
+    COMMIT;
+    
+    -- Print summary
+    DECLARE
+        v_animal_count NUMBER;
+        v_dog_count NUMBER;
+        v_cat_count NUMBER;
+        v_media_count NUMBER;
+        v_relation_count NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_animal_count FROM Animal;
+        SELECT COUNT(*) INTO v_dog_count FROM Animal WHERE species = 'Câine';
+        SELECT COUNT(*) INTO v_cat_count FROM Animal WHERE species = 'Pisică';
+        SELECT COUNT(*) INTO v_media_count FROM MultiMedia;
+        SELECT COUNT(*) INTO v_relation_count FROM Relations;
+        
+        DBMS_OUTPUT.PUT_LINE('Total animals generated: ' || v_animal_count);
+        DBMS_OUTPUT.PUT_LINE('Dogs: ' || v_dog_count || ', Cats: ' || v_cat_count);
+        DBMS_OUTPUT.PUT_LINE('Media entries: ' || v_media_count);
+        DBMS_OUTPUT.PUT_LINE('Relations: ' || v_relation_count);
+    END;
+END;
+/

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!--  security headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://localhost:3000; connect-src 'self' http://localhost:3000">
+    <meta name="csrf-token" id="csrf-token">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    
+    <title>Messages - Pet Adoption</title>
+    <link rel="stylesheet" href="../Home/Home.css">
+    <link rel="stylesheet" href="../SideBar/Sidebar.css">
+    <link rel="stylesheet" href="Messages.css">
+    <link rel="stylesheet" href="../utils/mobileStyles.css">
+</head>
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+        
+        <main class="main-content">
+            <h1 class="page-title">Messages</h1>
+            <div class="messages-interface">
+                <div class="conversations-list active">
+                    <div class="conversations-header">
+                        <h2>Conversations</h2>
+                    </div>
+                    <div id="conversation-list" class="conversation-list">
+                        <div class="loader">Loading conversations...</div>
+                    </div>
+                </div>
+                
+                <div id="messages-container" class="messages-container">
+                    <div id="conversation-header" class="conversation-header">
+                        <button class="back-button" aria-label="Back to conversations">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 12H5M12 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <h2 id="conversation-title">Messages</h2>
+                    </div>
+                    <div id="messages" class="messages">
+                        <!-- Messages will be loaded here -->
+                        <div class="empty-state">Select a conversation to view messages</div>
+                    </div>
+                    <form id="send-message-form" class="message-input-area">
+                        <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off">
+                        <button type="submit" aria-label="Send message">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script type="module" src="Messages.js"></script>
+    <script type="module" src="../utils/globalSecurity.js"></script>
+</body>
+</html>

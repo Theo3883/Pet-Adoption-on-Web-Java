@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!--  security headers -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://localhost:3000; connect-src 'self' http://localhost:3000">
+  <meta name="csrf-token" id="csrf-token">
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  
+  <title>Newsletter - Pet Adoption</title>
+  <link rel="stylesheet" href="../Home/Home.css">
+  <link rel="stylesheet" href="../SideBar/Sidebar.css">
+  <link rel="stylesheet" href="Newsletter.css">
+  <link rel="stylesheet" href="../utils/mobileStyles.css">
+</head>
+<body>
+  <div class="app-container">
+    <div id="sidebar-container"></div>
+    
+    <main class="main-content">
+      <h1 class="page-title">Newsletter Preferences</h1>
+      
+      <div id="newsletter-container" class="newsletter-container loading">
+        <div class="newsletter-intro">
+          <p>Select which animal species you'd like to receive email notifications about when new pets are added.</p>
+          <p>You'll receive emails from: <strong>teogaming31@gmail.com</strong></p>
+        </div>
+        
+        <div id="species-options" class="species-options">
+          <div class="loader">Loading your preferences...</div>
+        </div>
+        
+        <div id="feedback-message" class="feedback-message"></div>
+        
+        <button id="save-preferences" class="save-btn">Save Preferences</button>
+      </div>
+    </main>
+  </div>
+  
+  <script type="module" src="Newsletter.js"></script>
+  <script type="module" src="../utils/globalSecurity.js"></script>
+</body>
+</html>

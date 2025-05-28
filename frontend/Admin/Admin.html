@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login</title>
+  <link rel="stylesheet" href="Admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+  <link rel="stylesheet" href="../utils/mobileStyles.css">
+</head>
+<body>
+  <div class="admin-container">
+    <div class="admin-card">
+      <h1 class="admin-title">Admin Login</h1>
+      <form id="adminLoginForm">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="Enter admin email" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter admin password" required>
+        </div>
+        <div id="error-message" class="error-message"></div>
+        <button type="submit" class="admin-btn">Login</button>
+      </form>
+    </div>
+  </div>
+  <script type="module" src="Admin.js"></script>
+</body>
+</html>

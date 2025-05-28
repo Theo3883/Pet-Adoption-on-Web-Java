@@ -1,0 +1,132 @@
+.newsletter-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  margin: 20px 0;
+  max-width: 800px;
+}
+
+.newsletter-container.loading .species-options {
+  min-height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.newsletter-intro {
+  margin-bottom: 20px;
+  background-color: #f8f8f8;
+  padding: 15px;
+  border-radius: 5px;
+  border-left: 4px solid #d97706;
+}
+
+.species-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.species-option {
+  padding: 10px;
+  background-color: #f8f8f8;
+  border-radius: 5px;
+  transition: background-color 0.2s ease;
+}
+
+.species-option:hover {
+  background-color: #f0f0f0;
+}
+
+/* Custom checkbox  */
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 35px;
+  cursor: pointer;
+  font-size: 16px;
+  user-select: none;
+}
+
+.checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 20px;
+  width: 20px;
+  background-color: #eee;
+  border-radius: 4px;
+}
+
+.checkbox-container:hover input ~ .checkmark {
+  background-color: #ccc;
+}
+
+.checkbox-container input:checked ~ .checkmark {
+  background-color: #d97706;
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkbox-container .checkmark:after {
+  left: 7px;
+  top: 3px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.save-btn {
+  background-color: #d97706;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.save-btn:hover {
+  background-color: #b45309;
+}
+
+.success-message {
+  color: #059669;
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #d1fae5;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.error-message {
+  color: #dc2626;
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #fee2e2;
+  border-radius: 4px;
+  font-weight: 500;
+}

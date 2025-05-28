@@ -1,0 +1,435 @@
+-- Dropping all tables and sequences
+DROP TABLE Messages CASCADE CONSTRAINTS;
+DROP TABLE Relations CASCADE CONSTRAINTS;
+DROP TABLE MultiMedia CASCADE CONSTRAINTS;
+DROP TABLE FeedingSchedule CASCADE CONSTRAINTS;
+DROP TABLE MedicalHistory CASCADE CONSTRAINTS;
+DROP TABLE Animal CASCADE CONSTRAINTS;
+DROP TABLE Address CASCADE CONSTRAINTS;
+DROP TABLE Users CASCADE CONSTRAINTS;
+DROP TABLE Admins CASCADE CONSTRAINTS;
+DROP TABLE Newsletter CASCADE CONSTRAINTS;
+
+DROP SEQUENCE seq_messages;
+DROP SEQUENCE seq_users;
+DROP SEQUENCE seq_address;
+DROP SEQUENCE seq_animal;
+DROP SEQUENCE seq_medical;
+DROP SEQUENCE seq_feeding;
+DROP SEQUENCE seq_multimedia;
+DROP SEQUENCE seq_relations;
+DROP SEQUENCE seq_admins;
+DROP SEQUENCE seq_newsletter;
+
+CREATE OR REPLACE TYPE AdminObject AS OBJECT (
+    adminId NUMBER,
+    email VARCHAR2(255),
+    password VARCHAR2(100),
+    createdAt DATE,
+    
+    CONSTRUCTOR FUNCTION AdminObject(
+        p_email VARCHAR2, 
+        p_password VARCHAR2, 
+        p_createdAt DATE DEFAULT SYSDATE
+    ) RETURN SELF AS RESULT
+);
+/
+
+CREATE OR REPLACE TYPE BODY AdminObject AS
+    CONSTRUCTOR FUNCTION AdminObject(
+        p_email VARCHAR2, 
+        p_password VARCHAR2, 
+        p_createdAt DATE DEFAULT SYSDATE
+    ) RETURN SELF AS RESULT IS
+    BEGIN
+        IF p_email IS NULL THEN
+            RAISE_APPLICATION_ERROR(-20001, 'Email cannot be null');
+        END IF;
+        
+        IF p_password IS NULL THEN
+            RAISE_APPLICATION_ERROR(-20002, 'Password cannot be null');
+        ELSIF LENGTH(p_password) < 6 THEN
+            RAISE_APPLICATION_ERROR(-20003, 'Password must be at least 6 characters long');
+        END IF;
+        
+        self.adminId := NULL; 
+        self.email := p_email;
+        self.password := p_password;
+        self.createdAt := p_createdAt;
+        
+        RETURN;
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error creating AdminObject: ' || SQLERRM);
+            RAISE;
+    END;
+END;
+/
+CREATE OR REPLACE TYPE feeding_time_array AS VARRAY(10) OF VARCHAR2(50);
+/
+
+CREATE TABLE Users (
+    userID NUMBER PRIMARY KEY,
+    firstName VARCHAR2(100),
+    lastName VARCHAR2(100),
+    email VARCHAR2(255) UNIQUE,
+    password VARCHAR2(255),
+    phone VARCHAR2(20),
+    createdAt DATE DEFAULT SYSDATE
+);
+
+CREATE TABLE Admins (
+    adminData AdminObject
+);
+
+CREATE TABLE Address (
+    addressID NUMBER PRIMARY KEY,
+    userID NUMBER UNIQUE,
+    Street VARCHAR2(255),
+    City VARCHAR2(100),
+    State VARCHAR2(100),
+    ZipCode NUMBER,
+    Country VARCHAR2(100),
+    CONSTRAINT fk_address_user FOREIGN KEY (userID) REFERENCES Users(userID)
+);
+
+CREATE TABLE Animal (
+    animalID NUMBER PRIMARY KEY,
+    userID NUMBER,
+    name VARCHAR2(100),
+    breed VARCHAR2(100),
+    species VARCHAR2(100),
+    age NUMBER,
+    views NUMBER DEFAULT 0,
+    gender VARCHAR2(10) CHECK (gender IN ('male', 'female')),
+    createdAt DATE DEFAULT SYSDATE,
+    CONSTRAINT fk_animal_user FOREIGN KEY (userID) REFERENCES Users(userID)
+);
+
+CREATE TABLE MedicalHistory (
+    id NUMBER PRIMARY KEY,
+    animalID NUMBER,
+    vetNumber VARCHAR2(50),
+    recordDate DATE,
+    description VARCHAR2(4000),
+    first_aid_noted VARCHAR2(4000),
+    CONSTRAINT fk_medical_animal FOREIGN KEY (animalID) REFERENCES Animal(animalID)
+);
+
+CREATE TABLE FeedingSchedule (
+    id NUMBER PRIMARY KEY,
+    animalID NUMBER UNIQUE,
+    feeding_time feeding_time_array,
+    food_type VARCHAR2(100),
+    notes VARCHAR2(4000),
+    CONSTRAINT fk_feeding_animal FOREIGN KEY (animalID) REFERENCES Animal(animalID)
+);
+
+CREATE TABLE MultiMedia (
+    id NUMBER PRIMARY KEY,
+    animalID NUMBER,
+    media VARCHAR2(10) CHECK (media IN ('photo', 'video', 'audio')),
+    url VARCHAR2(1000),
+    description VARCHAR2(4000),
+    upload_date DATE,
+    CONSTRAINT fk_multimedia_animal FOREIGN KEY (animalID) REFERENCES Animal(animalID)
+);
+
+CREATE TABLE Relations (
+    id NUMBER PRIMARY KEY,
+    animalID NUMBER UNIQUE,
+    friendWith VARCHAR2(4000),
+    CONSTRAINT fk_relation_animal FOREIGN KEY (animalID) REFERENCES Animal(animalID)
+);
+
+CREATE TABLE Messages (
+    messageId NUMBER PRIMARY KEY,
+    senderId NUMBER NOT NULL,
+    receiverId NUMBER NOT NULL,
+    content VARCHAR2(2000) NOT NULL,
+    timestamp DATE DEFAULT SYSDATE,
+    isRead NUMBER(1) DEFAULT 0,
+    CONSTRAINT fk_messages_sender FOREIGN KEY (senderId) REFERENCES Users(userID),
+    CONSTRAINT fk_messages_receiver FOREIGN KEY (receiverId) REFERENCES Users(userID)
+);
+
+CREATE TABLE Newsletter (
+    id NUMBER PRIMARY KEY,
+    userID NUMBER NOT NULL,
+    species VARCHAR2(100) NOT NULL,
+    isActive NUMBER(1) DEFAULT 1,
+    subscribedAt DATE DEFAULT SYSDATE,
+    CONSTRAINT fk_newsletter_user FOREIGN KEY (userID) REFERENCES Users(userID),
+    CONSTRAINT uk_newsletter_user_species UNIQUE (userID, species)
+);
+
+CREATE SEQUENCE seq_users START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_admins START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_address START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_animal START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_medical START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_feeding START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_multimedia START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_relations START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_messages START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_newsletter START WITH 1 INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER trg_users
+BEFORE INSERT ON Users
+FOR EACH ROW
+BEGIN
+    :NEW.userID := seq_users.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_admins
+BEFORE INSERT ON Admins
+FOR EACH ROW
+BEGIN
+    :NEW.adminData.adminId := seq_admins.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_address
+BEFORE INSERT ON Address
+FOR EACH ROW
+BEGIN
+    :NEW.addressID := seq_address.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_animal
+BEFORE INSERT ON Animal
+FOR EACH ROW
+BEGIN
+    :NEW.animalID := seq_animal.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_medical
+BEFORE INSERT ON MedicalHistory
+FOR EACH ROW
+BEGIN
+    :NEW.id := seq_medical.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_feeding
+BEFORE INSERT ON FeedingSchedule
+FOR EACH ROW
+BEGIN
+    :NEW.id := seq_feeding.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_multimedia
+BEFORE INSERT ON MultiMedia
+FOR EACH ROW
+BEGIN
+    :NEW.id := seq_multimedia.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_relations
+BEFORE INSERT ON Relations
+FOR EACH ROW
+BEGIN
+    :NEW.id := seq_relations.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_messages
+BEFORE INSERT ON Messages
+FOR EACH ROW
+BEGIN
+    :NEW.messageId := seq_messages.NEXTVAL;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_newsletter
+BEFORE INSERT ON Newsletter
+FOR EACH ROW
+BEGIN
+    :NEW.id := seq_newsletter.NEXTVAL;
+END;
+/
+CREATE OR REPLACE PACKAGE pet_adoption_utils AS
+    e_invalid_animal_id EXCEPTION;
+    PRAGMA EXCEPTION_INIT(e_invalid_animal_id, -20100);
+    e_invalid_user_id EXCEPTION;
+    PRAGMA EXCEPTION_INIT(e_invalid_user_id, -20101);
+    e_duplicate_subscription EXCEPTION;
+    PRAGMA EXCEPTION_INIT(e_duplicate_subscription, -20102);
+    
+    FUNCTION animal_exists(p_animal_id IN NUMBER) RETURN BOOLEAN;
+    
+    FUNCTION user_exists(p_user_id IN NUMBER) RETURN BOOLEAN;
+    
+    PROCEDURE delete_animal_safe(p_animal_id IN NUMBER);
+
+    FUNCTION get_popular_breeds(p_species IN VARCHAR2) RETURN SYS_REFCURSOR;
+    
+    FUNCTION is_subscribed(p_user_id IN NUMBER, p_species IN VARCHAR2) RETURN BOOLEAN;
+END pet_adoption_utils;
+/
+
+CREATE OR REPLACE PACKAGE BODY pet_adoption_utils AS
+    FUNCTION animal_exists(p_animal_id IN NUMBER) RETURN BOOLEAN IS
+        v_count NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_count 
+        FROM Animal 
+        WHERE animalID = p_animal_id;
+        
+        RETURN v_count > 0;
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error checking animal existence: ' || SQLERRM);
+            RETURN FALSE;
+    END animal_exists;
+    
+    FUNCTION user_exists(p_user_id IN NUMBER) RETURN BOOLEAN IS
+        v_count NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_count 
+        FROM Users 
+        WHERE userID = p_user_id;
+        
+        RETURN v_count > 0;
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error checking user existence: ' || SQLERRM);
+            RETURN FALSE;
+    END user_exists;
+    
+    PROCEDURE delete_animal_safe(p_animal_id IN NUMBER) IS
+    BEGIN
+        IF NOT animal_exists(p_animal_id) THEN
+            RAISE_APPLICATION_ERROR(-20100, 'Invalid animal ID: ' || p_animal_id);
+        END IF;
+        
+        DELETE FROM Relations WHERE animalID = p_animal_id;
+        DELETE FROM MultiMedia WHERE animalID = p_animal_id;
+        DELETE FROM FeedingSchedule WHERE animalID = p_animal_id;
+        DELETE FROM MedicalHistory WHERE animalID = p_animal_id;
+        
+        DELETE FROM Animal WHERE animalID = p_animal_id;
+        
+        COMMIT;
+        DBMS_OUTPUT.PUT_LINE('Animal with ID ' || p_animal_id || ' and all related data deleted successfully');
+    EXCEPTION
+        WHEN OTHERS THEN
+            ROLLBACK;
+            DBMS_OUTPUT.PUT_LINE('Error deleting animal: ' || SQLERRM);
+            RAISE;
+    END delete_animal_safe;
+    
+    FUNCTION get_popular_breeds(p_species IN VARCHAR2) RETURN SYS_REFCURSOR IS
+        v_cursor SYS_REFCURSOR;
+    BEGIN
+        OPEN v_cursor FOR
+            SELECT breed, COUNT(*) as breed_count
+            FROM Animal
+            WHERE species = p_species
+            GROUP BY breed
+            ORDER BY breed_count DESC;
+            
+        RETURN v_cursor;
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error getting popular breeds: ' || SQLERRM);
+            RAISE;
+    END get_popular_breeds;
+    
+    FUNCTION is_subscribed(p_user_id IN NUMBER, p_species IN VARCHAR2) RETURN BOOLEAN IS
+        v_count NUMBER;
+    BEGIN
+        IF NOT user_exists(p_user_id) THEN
+            RAISE_APPLICATION_ERROR(-20101, 'Invalid user ID: ' || p_user_id);
+        END IF;
+        
+        SELECT COUNT(*) INTO v_count
+        FROM Newsletter
+        WHERE userID = p_user_id
+        AND species = p_species
+        AND isActive = 1;
+        
+        RETURN v_count > 0;
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error checking subscription: ' || SQLERRM);
+            RETURN FALSE;
+    END is_subscribed;
+    
+END pet_adoption_utils;
+/
+CREATE OR REPLACE VIEW AnimalAdoptionMetrics AS
+SELECT 
+    a.species,
+    a.breed,
+    COUNT(*) as total_animals,
+    AVG(a.age) as average_age,
+    SUM(a.views) as total_views,
+    COUNT(CASE WHEN a.gender = 'male' THEN 1 END) as male_count,
+    COUNT(CASE WHEN a.gender = 'female' THEN 1 END) as female_count,
+    u.city as location
+FROM 
+    Animal a
+JOIN 
+    Users s ON a.userID = s.userID
+JOIN 
+    Address u ON s.userID = u.userID
+GROUP BY 
+    a.species, a.breed, u.city;
+
+CREATE OR REPLACE PROCEDURE process_animals_by_species(p_species IN VARCHAR2) IS
+    CURSOR animal_cursor IS
+        SELECT a.animalID, a.name, a.breed, a.age, u.firstName, u.lastName
+        FROM Animal a
+        JOIN Users u ON a.userID = u.userID
+        WHERE a.species = p_species
+        ORDER BY a.age;
+    
+    v_animal_id Animal.animalID%TYPE;
+    v_animal_name Animal.name%TYPE;
+    v_animal_breed Animal.breed%TYPE;
+    v_animal_age Animal.age%TYPE;
+    v_owner_first_name Users.firstName%TYPE;
+    v_owner_last_name Users.lastName%TYPE;
+    v_counter NUMBER := 0;
+BEGIN
+    OPEN animal_cursor;
+    
+    DBMS_OUTPUT.PUT_LINE('Processing animals of species: ' || p_species);
+    DBMS_OUTPUT.PUT_LINE('----------------------------------------');
+    
+    LOOP
+        FETCH animal_cursor INTO 
+            v_animal_id, v_animal_name, v_animal_breed, v_animal_age, 
+            v_owner_first_name, v_owner_last_name;
+        
+        EXIT WHEN animal_cursor%NOTFOUND;
+        
+        v_counter := v_counter + 1;
+        DBMS_OUTPUT.PUT_LINE(
+            v_counter || '. ' || v_animal_name || ' (' || v_animal_breed || ', ' || 
+            v_animal_age || ' years) - Owner: ' || v_owner_first_name || ' ' || v_owner_last_name
+        );
+    END LOOP;
+    
+    IF v_counter = 0 THEN
+        DBMS_OUTPUT.PUT_LINE('No animals found for species: ' || p_species);
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Total animals processed: ' || v_counter);
+    END IF;
+    
+    CLOSE animal_cursor;
+EXCEPTION
+    WHEN OTHERS THEN
+        IF animal_cursor%ISOPEN THEN
+            CLOSE animal_cursor;
+        END IF;
+        DBMS_OUTPUT.PUT_LINE('Error processing animals: ' || SQLERRM);
+        RAISE;
+END process_animals_by_species;
+/

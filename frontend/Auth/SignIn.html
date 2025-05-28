@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#f59e0b">
+  <meta charset="UTF-8">
+  
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://localhost:3000">
+  <meta name="csrf-token" id="csrf-token">
+  
+  <title>Sign In Page</title>
+  
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f9fafb;
+    }
+    
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+    
+    .signin-section {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    .card {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+      padding: 30px;
+    }
+    
+    h1 {
+      color: #333;
+      margin-top: 0;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #444;
+    }
+    
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background-color: #fca311;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-top: 10px;
+    }
+  </style>
+  
+  <!-- Non-critical CSS loaded asynchronously -->
+  <link rel="preload" href="SignIn.css" as="style">
+  <noscript><link rel="stylesheet" href="SignIn.css"></noscript>
+  <script>
+    const styleSheet = document.querySelector('link[href="SignIn.css"]');
+    if (styleSheet) {
+      styleSheet.rel = 'stylesheet';
+    }
+  </script>
+  
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js" as="script">
+  <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js" defer></script>
+  <link rel="stylesheet" href="../utils/mobileStyles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Slider de imagini - loaded with JavaScript to avoid blocking render -->
+    <div class="photo-section" id="imageSlider">
+      <div class="welcome-text">Adoptă. Iubește. Schimbă o viață.</div>
+    </div>
+
+    <!-- Formul de sign-in -->
+    <div class="signin-section">
+      <div class="card">
+        <h1>Sign In</h1>
+        <form id="signInForm">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+          </div>
+          <button type="submit" class="btn">Sign In</button>
+        </form>
+        <p class="footer-text">Don't have an account? <a href="SignUp.html">Sign Up</a></p>
+      </div>
+    </div>
+  </div>
+  
+  <script type="module" src="SignIn.js"></script>
+  <script type="module" src="../utils/globalSecurity.js"></script>
+</body>
+</html>

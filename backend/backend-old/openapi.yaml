@@ -1,0 +1,910 @@
+openapi: 3.0.0
+info:
+  title: Pet Adoption API
+  description: |
+    API for pet adoption web application with user management, animal listings, and messaging.
+    
+    ## Authentication
+    This API uses JWT Bearer tokens for authentication. To access protected endpoints:
+    1. Get a token by authenticating via `/users/login` or `/admin/login`
+    2. Include the token in the Authorization header: `Authorization: Bearer YOUR_TOKEN`
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Development server
+tags:
+  - name: Authentication
+    description: User and admin authentication endpoints
+  - name: Users
+    description: User management operations
+  - name: Animals
+    description: Animal listing and management
+  - name: Messages
+    description: User messaging system
+  - name: Newsletter
+    description: Newsletter subscription management
+  - name: Media
+    description: Media handling and uploads
+paths:
+  /users/login:
+    post:
+      summary: Authenticate user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+        '400':
+          description: Missing required fields
+          
+  /users/signup:
+    post:
+      summary: Register new user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - email
+                - password
+                - phone
+                - street
+                - city
+                - state
+                - zipCode
+                - country
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                phone:
+                  type: string
+                street:
+                  type: string
+                city:
+                  type: string
+                state:
+                  type: string
+                zipCode:
+                  type: string
+                country:
+                  type: string
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  userId:
+                    type: integer
+        '400':
+          description: Invalid or missing data
+        '409':
+          description: Email already registered
+          
+  /admin/login:
+    post:
+      summary: Authenticate admin
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  token:
+                    type: string
+        '401':
+          description: Invalid credentials
+          
+  /users/all/details:
+    get:
+      summary: Get all users with details
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of all users with details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserWithDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Admin privileges required
+          
+  /users/{userId}:
+    delete:
+      summary: Delete user
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the user to delete
+      responses:
+        '200':
+          description: User successfully deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Admin privileges required
+        '404':
+          description: User not found
+          
+  /animals/all:
+    get:
+      summary: Get all animals with multimedia
+      tags:
+        - Animals
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of all animals with multimedia
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnimalWithMultimedia'
+        '401':
+          description: Unauthorized
+          
+  /animals/details:
+    post:
+      summary: Get animal details by ID
+      tags:
+        - Animals
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - animalId
+              properties:
+                animalId:
+                  type: integer
+      responses:
+        '200':
+          description: Detailed animal information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnimalDetails'
+        '400':
+          description: Animal ID is required
+        '404':
+          description: Animal not found
+          
+  /animals/species:
+    post:
+      summary: Find animals by species
+      tags:
+        - Animals
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - species
+              properties:
+                species:
+                  type: string
+      responses:
+        '200':
+          description: List of animals of specified species
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnimalWithMultimedia'
+        '400':
+          description: Species is required
+        '404':
+          description: No animals found for this species
+          
+  /animals/create:
+    post:
+      summary: Create a new animal
+      tags:
+        - Animals
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnimalCreate'
+      responses:
+        '201':
+          description: Animal created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  animalId:
+                    type: integer
+        '400':
+          description: Missing required fields or invalid data
+          
+  /animals/{animalId}:
+    delete:
+      summary: Delete an animal
+      tags:
+        - Animals
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: animalId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the animal to delete
+      responses:
+        '200':
+          description: Animal successfully deleted
+        '400':
+          description: Animal ID is required
+        '404':
+          description: Animal not found
+          
+  /animals/top-by-city:
+    get:
+      summary: Get top animals by city
+      tags:
+        - Animals
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: User ID to determine the city
+      responses:
+        '200':
+          description: List of top animals in user's city
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Animal'
+        '400':
+          description: User ID is required
+          
+  /messages/send:
+    post:
+      summary: Send a new message
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - receiverId
+                - content
+              properties:
+                receiverId:
+                  type: integer
+                content:
+                  type: string
+      responses:
+        '201':
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  messageId:
+                    type: integer
+        '400':
+          description: Missing required fields
+        '401':
+          description: User authentication required
+          
+  /messages/conversation:
+    post:
+      summary: Get conversation with another user
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: integer
+      responses:
+        '200':
+          description: List of messages between users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        '400':
+          description: User ID is required
+          
+  /messages/conversations:
+    get:
+      summary: Get all conversations for current user
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Conversation'
+          
+  /messages/read:
+    post:
+      summary: Mark messages as read
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - messageIds
+              properties:
+                messageIds:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: Messages marked as read successfully
+          
+  /messages/unread-count:
+    get:
+      summary: Get count of unread messages
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Count of unread messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+          
+  /newsletter/subscriptions:
+    get:
+      summary: Get user's newsletter subscriptions
+      tags:
+        - Newsletter
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User's newsletter subscriptions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewsletterSubscriptions'
+          
+  /newsletter/update:
+    post:
+      summary: Update user's newsletter subscriptions
+      tags:
+        - Newsletter
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewsletterSubscriptions'
+      responses:
+        '200':
+          description: Subscriptions updated successfully
+          
+  /upload:
+    post:
+      summary: Upload a file/image
+      tags:
+        - Media
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+        '400':
+          description: Invalid file or missing file
+          
+  /media/pipe/{id}:
+    get:
+      summary: Get media by ID
+      tags:
+        - Media
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: width
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Optional width for responsive images
+      responses:
+        '200':
+          description: Media file
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            video/mp4:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Media not found
+          
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT Authentication using Bearer tokens.
+        Get your token by authenticating through the /users/login or /admin/login endpoints.
+        
+        Example: `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+  schemas:
+    User:
+      type: object
+      properties:
+        USERID:
+          type: integer
+        FIRSTNAME:
+          type: string
+        LASTNAME:
+          type: string
+        EMAIL:
+          type: string
+          format: email
+        PHONE:
+          type: string
+        CREATEDAT:
+          type: string
+          format: date-time
+    
+    Address:
+      type: object
+      properties:
+        ADDRESSID:
+          type: integer
+        STREET:
+          type: string
+        CITY:
+          type: string
+        STATE:
+          type: string
+        ZIPCODE:
+          type: string
+        COUNTRY:
+          type: string
+    
+    UserWithDetails:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            address:
+              $ref: '#/components/schemas/Address'
+            animals:
+              type: array
+              items:
+                $ref: '#/components/schemas/AnimalWithDetails'
+    
+    Animal:
+      type: object
+      properties:
+        ANIMALID:
+          type: integer
+        USERID:
+          type: integer
+        NAME:
+          type: string
+        BREED:
+          type: string
+        SPECIES:
+          type: string
+        AGE:
+          type: integer
+        GENDER:
+          type: string
+          enum:
+            - male
+            - female
+        VIEWS:
+          type: integer
+        CREATEDAT:
+          type: string
+          format: date-time
+    
+    MultiMedia:
+      type: object
+      properties:
+        ID:
+          type: integer
+        ANIMALID:
+          type: integer
+        MEDIATYPE:
+          type: string
+        URL:
+          type: string
+        DESCRIPTION:
+          type: string
+        UPLOAD_DATE:
+          type: string
+          format: date-time
+    
+    AnimalWithMultimedia:
+      allOf:
+        - $ref: '#/components/schemas/Animal'
+        - type: object
+          properties:
+            multimedia:
+              type: array
+              items:
+                $ref: '#/components/schemas/MultiMedia'
+    
+    FeedingSchedule:
+      type: object
+      properties:
+        ID:
+          type: integer
+        ANIMALID:
+          type: integer
+        FEEDING_TIME:
+          type: array
+          items:
+            type: string
+            format: time
+        FOOD_TYPE:
+          type: string
+        NOTES:
+          type: string
+    
+    MedicalHistory:
+      type: object
+      properties:
+        ID:
+          type: integer
+        ANIMALID:
+          type: integer
+        VETNUMBER:
+          type: string
+        RECORDDATE:
+          type: string
+          format: date
+        DESCRIPTION:
+          type: string
+        FIRST_AID_NOTED:
+          type: boolean
+    
+    Relations:
+      type: object
+      properties:
+        ID:
+          type: integer
+        ANIMALID:
+          type: integer
+        FRIENDWITH:
+          type: string
+    
+    AnimalDetails:
+      type: object
+      properties:
+        animal:
+          $ref: '#/components/schemas/Animal'
+        multimedia:
+          type: array
+          items:
+            $ref: '#/components/schemas/MultiMedia'
+        feedingSchedule:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedingSchedule'
+        medicalHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/MedicalHistory'
+        owner:
+          $ref: '#/components/schemas/User'
+        address:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+        relations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Relations'
+    
+    AnimalWithDetails:
+      allOf:
+        - $ref: '#/components/schemas/Animal'
+        - type: object
+          properties:
+            multimedia:
+              type: array
+              items:
+                $ref: '#/components/schemas/MultiMedia'
+            feedingSchedule:
+              type: array
+              items:
+                $ref: '#/components/schemas/FeedingSchedule'
+            medicalHistory:
+              type: array
+              items:
+                $ref: '#/components/schemas/MedicalHistory'
+    
+    AnimalCreate:
+      type: object
+      required:
+        - userID
+        - name
+        - breed
+        - species
+        - age
+        - gender
+      properties:
+        userID:
+          type: integer
+        name:
+          type: string
+        breed:
+          type: string
+        species:
+          type: string
+        age:
+          type: integer
+        gender:
+          type: string
+          enum:
+            - male
+            - female
+        feedingSchedule:
+          type: array
+          items:
+            type: object
+            properties:
+              feedingTime:
+                type: string
+                format: time
+              foodType:
+                type: string
+        medicalHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              vetNumber:
+                type: string
+              recordDate:
+                type: string
+                format: date
+              description:
+                type: string
+              first_aid_noted:
+                type: boolean
+        multimedia:
+          type: array
+          items:
+            type: object
+            properties:
+              mediaType:
+                type: string
+              url:
+                type: string
+              description:
+                type: string
+        relations:
+          type: object
+          properties:
+            friendWith:
+              type: string
+    
+    Message:
+      type: object
+      properties:
+        MESSAGEID:
+          type: integer
+        SENDERID:
+          type: integer
+        RECEIVERID:
+          type: integer
+        CONTENT:
+          type: string
+        TIMESTAMP:
+          type: string
+          format: date-time
+        READ:
+          type: boolean
+        senderName:
+          type: string
+        receiverName:
+          type: string
+    
+    Conversation:
+      type: object
+      properties:
+        userId:
+          type: integer
+        userName:
+          type: string
+        lastMessage:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        unreadCount:
+          type: integer
+    
+    NewsletterSubscriptions:
+      type: object
+      properties:
+        dogs:
+          type: boolean
+        cats:
+          type: boolean
+        birds:
+          type: boolean
+        reptiles:
+          type: boolean
+        other:
+          type: boolean

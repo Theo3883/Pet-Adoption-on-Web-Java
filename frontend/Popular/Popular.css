@@ -1,0 +1,111 @@
+body, html {
+  height: 100%;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to bottom right, #fffaf3, #ffe5c4);
+  background-image: url('https://www.transparenttextures.com/patterns/paw-print.png');
+  background-size: 200px 200px;
+  background-blend-mode: overlay;
+  margin: 0;
+  padding: 0;
+}
+
+/* App layout */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+/* Main content area */
+.main-content {
+  margin-left: 290px;
+  flex: 1;
+  padding: 30px;
+}
+
+/* Cards container */
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  padding: 10px 0;
+}
+
+.card {
+  background: linear-gradient(to bottom right, #ffffff, #ffe9cc);
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+.card-img-container {
+  position: relative;
+  padding-bottom: 66.67%; 
+  background-color: #f0f0f0;
+  overflow: hidden;
+}
+
+.card img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Image loading states */
+.card img.loading {
+  filter: blur(8px);
+  transform: scale(1.05);
+  transition: filter 0.5s, transform 0.5s;
+}
+
+.card img.loaded {
+  filter: blur(0);
+  transform: scale(1);
+}
+
+.card-content {
+  padding: 1rem;
+}
+
+.card-content h2 {
+  font-size: 1.2rem;
+  margin: 0;
+  color: #d97706;
+}
+
+.card-content p {
+  margin: 0.5rem 0;
+  color: #6b7280;
+}
+
+/* Loading indicator */
+.loader {
+  text-align: center;
+  color: #888;
+  padding: 20px;
+}
+
+/* Empty state styling */
+.no-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  background: linear-gradient(to bottom right, #ffffff, #ffe9cc);
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  font-size: 1.2rem;
+  color: #6b7280;
+}

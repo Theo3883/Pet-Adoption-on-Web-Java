@@ -1,0 +1,99 @@
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.users-table th,
+.users-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.users-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.users-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.delete-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+.delete-btn:hover {
+    background-color: #c0392b;
+}
+
+.modal-delete-btn {
+    display: block;
+    margin-top: 15px;
+    width: 100%;
+    padding: 8px;
+    font-weight: bold;
+}
+
+.view-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.view-btn:hover {
+    background-color: #2980b9;
+}
+
+/* User details modal styles */
+.user-details-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.user-info h3 {
+    color: #475569;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+}
+
+.user-info p {
+    margin: 8px 0;
+    line-height: 1.5;
+}
+
+.pets-mini-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.pets-mini-table th,
+.pets-mini-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.pets-mini-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.pets-mini-table tr:hover {
+    background-color: #f8f9fa;
+}

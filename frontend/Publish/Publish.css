@@ -1,0 +1,221 @@
+body, html {
+  height: 100%;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to bottom right, #fffaf3, #ffe5c4);
+  background-image: url('https://www.transparenttextures.com/patterns/paw-print.png');
+  background-size: 200px 200px;
+  background-blend-mode: overlay;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow-y: auto; 
+  padding: 20px; 
+}
+
+.card {
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh; /* Limitează înălțimea cardului */
+  overflow-y: auto; /* Permite scroll intern dacă este necesar */
+  padding: 20px;
+  background: linear-gradient(to bottom right, #ffffff, #ffe9cc); /* Gradient cald */
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.card h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-top: 20px; /* Spațiu între secțiuni */
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full-width {
+  grid-column: span 2;
+}
+
+label {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+input, select, textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #fca311;
+  box-shadow: 0 0 0 3px rgba(252, 163, 17, 0.3);
+}
+
+select:focus {
+  outline: none;
+  border-color: #fca311;
+  box-shadow: 0 0 0 3px rgba(252, 163, 17, 0.3);
+}
+
+/* Styling pentru input-ul de tip file */
+input[type="file"] {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+input[type="file"]:focus {
+  outline: none;
+  border-color: #fca311;
+  box-shadow: 0 0 0 3px rgba(252, 163, 17, 0.3);
+}
+
+.btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #fca311;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #fb8500;
+  transform: scale(1.02);
+}
+
+/* Styling for the add-entry button */
+.add-entry-btn {
+  background-color: #10b981; /* Verde cald */
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 10px;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.add-entry-btn:hover {
+  background-color: #059669; /* Verde mai intens */
+  transform: scale(1.02);
+}
+
+/* Styling for dynamically added medical history entries */
+.medical-history-entry {
+  margin-bottom: 20px;
+  border-top: 1px solid #ccc;
+  padding-top: 10px;
+}
+
+/* Styling pentru intrările multimedia */
+.multimedia-entry {
+  margin-bottom: 20px;
+  border-top: 1px solid #ccc;
+  padding-top: 10px;
+}
+
+/* Styling pentru intrările din programul de hrănire */
+.feeding-schedule-entry {
+  margin-bottom: 20px;
+  border-top: 1px solid #ccc;
+  padding-top: 10px;
+}
+
+/* Styling pentru butonul de ștergere */
+.delete-entry-btn {
+  background-color: #ef4444; 
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 12px;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.delete-entry-btn:hover {
+  background-color: #dc2626; 
+  transform: scale(1.02);
+}
+
+/* Ascunde butonul de ștergere */
+.delete-entry-btn.hidden {
+  display: none;
+}
+
+
+.back-to-home-btn {
+  position: fixed; 
+  top: 10px; 
+  left: 10px; 
+  background-color: #3b82f6; 
+  color: white;
+  border: none;
+  border-radius: 5px; 
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 12px; 
+  transition: all 0.3s ease;
+  z-index: 1000; 
+  text-align: center;
+  width: auto; 
+}
+
+.back-to-home-btn:hover {
+  background-color: #2563eb; 
+  transform: scale(1.05); 
+}

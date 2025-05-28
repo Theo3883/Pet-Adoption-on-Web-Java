@@ -1,0 +1,58 @@
+.page-title {
+    color: #d97706;
+    margin-bottom: 30px;
+    font-size: 2rem;
+}
+
+.delete-btn {
+    padding: 8px 12px;
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 10px;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.delete-btn:hover {
+    background-color: #dc2626;
+    transform: scale(1.02);
+}
+
+.no-animals {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 30px;
+    background: linear-gradient(to bottom right, #ffffff, #ffe9cc);
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.no-animals h3 {
+    color: #d97706;
+    margin-bottom: 15px;
+}
+
+.no-animals p {
+    color: #6b7280;
+    margin-bottom: 20px;
+}
+
+.no-animals .btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #fca311;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.error-message {
+    color: #ef4444;
+    text-align: center;
+    grid-column: 1 / -1;
+}

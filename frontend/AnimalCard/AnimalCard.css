@@ -1,0 +1,539 @@
+/* Animal Card Popup Styles */
+.animal-popup-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050; 
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding: 0;
+  overscroll-behavior: contain; /* Prevent background scrolling on iOS */
+}
+
+.animal-popup-content {
+  background-color: white;
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .animal-popup-backdrop {
+    padding: 20px;
+  }
+  
+  .animal-popup-content {
+    flex-direction: row;
+    width: 95%;
+    max-width: 1200px;
+    height: auto;
+    max-height: 85vh;
+    border-radius: 8px;
+  }
+}
+
+/* Close Button */
+.popup-close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 44px; 
+  height: 44px; 
+  font-size: 24px;
+  line-height: 44px; 
+  cursor: pointer;
+  z-index: 1051;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.popup-close-button:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Image Container and Slideshow */
+.popup-image-container {
+  flex: 0 0 auto;
+  height: 40vh;
+  background-color: #000;
+  position: relative;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .popup-image-container {
+    flex: 0 0 50%;
+    height: auto;
+    max-height: none;
+  }
+}
+
+.slideshow-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.popup-animal-image {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* Video styling */
+.popup-animal-video {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  background: #000;
+  display: block;
+}
+
+/* Audio styling */
+.audio-placeholder {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  margin-bottom: 10px;
+}
+
+.audio-placeholder img {
+  max-width: 100%;
+  max-height: 100%;
+  opacity: 0.7;
+}
+
+.popup-animal-audio {
+  width: 80%;
+  max-width: 400px;
+  margin: 0 auto;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  position: relative;
+}
+
+.audio-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  padding: 30px 0;
+  position: relative;
+  z-index: 10; 
+}
+
+.no-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e9e9e9;
+}
+
+.no-image-placeholder img {
+  max-width: 100%;
+  max-height: 300px;
+}
+
+/* Slideshow Navigation */
+.slideshow-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 5; 
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.slideshow-nav:hover {
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+.slideshow-nav.prev {
+  left: 15px;
+}
+
+.slideshow-nav.next {
+  right: 15px;
+}
+
+/* Improved touch targets for slide navigation */
+@media (max-width: 767px) {
+  .slideshow-nav {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .slideshow-nav.prev {
+    left: 8px;
+  }
+  
+  .slideshow-nav.next {
+    right: 8px;
+  }
+  
+  /* Improve dot indicators for touch */
+  .dot {
+    width: 12px; 
+    height: 12px;
+    margin: 0 6px;
+  }
+}
+
+/* Slideshow Dots */
+.slideshow-dots {
+  position: absolute;
+  bottom: 15px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin: 0 5px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.dot.active, .dot:hover {
+  background-color: #fff;
+}
+
+/* Details Section */
+.popup-details {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  max-height: 500px;
+  box-sizing: border-box; 
+  width: 100%; 
+}
+
+@media (min-width: 768px) {
+  .popup-details {
+    max-height: 85vh;
+    width: 50%;
+  }
+}
+
+.popup-details h2 {
+  font-size: 24px;
+  color: #333;
+  margin: 0 0 15px 0;
+}
+
+.popup-details h3 {
+  font-size: 18px;
+  color: #555;
+  margin: 20px 0 10px 0;
+}
+
+.animal-specs {
+  background-color: #f8f8f8;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.animal-specs p {
+  margin: 8px 0;
+  color: #666;
+  word-wrap: break-word; 
+}
+
+/* Feeding Schedule Section */
+.animal-feeding-schedule, .animal-medical-history {
+  margin-bottom: 20px;
+  background-color: #f8f8f8;
+  border-radius: 8px;
+  padding: 15px;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%; 
+}
+
+.animal-feeding-schedule h3, .animal-medical-history h3 {
+  margin-top: 0;
+  color: #555;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+}
+
+.feeding-schedule-list, .medical-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 5px; /* Space for scrollbar */
+}
+
+.feeding-schedule-item {
+  background-color: white;
+  padding: 10px;
+  border-radius: 6px;
+  border-left: 3px solid #d97706;
+  box-sizing: border-box;
+  width: 100%;
+  word-wrap: break-word;
+}
+
+.feeding-time, .food-type {
+  margin-bottom: 5px;
+  word-wrap: break-word;
+}
+
+.feeding-notes {
+  font-style: italic;
+  color: #666;
+  margin-top: 5px;
+  font-size: 0.9em;
+  word-wrap: break-word;
+}
+
+/* Medical History Section */
+.medical-record {
+  background-color: white;
+  padding: 10px;
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  word-wrap: break-word;
+}
+
+.record-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-weight: 500;
+  flex-wrap: wrap; 
+}
+
+.vet-number {
+  color: #3b82f6;
+  font-size: 0.9em;
+}
+
+.record-description {
+  margin: 8px 0;
+  word-wrap: break-word;
+}
+
+.first-aid-notes {
+  font-size: 0.9em;
+  color: #dc2626;
+  padding-top: 5px;
+  border-top: 1px dashed #eee;
+  word-wrap: break-word;
+}
+
+/* Owner Information */
+.animal-owner {
+  margin-bottom: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.contact-button {
+  background-color: #d97706;
+  color: white;
+  border: none;
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 15px;
+  margin-bottom: 10px;
+  transition: background-color 0.2s;
+  width: 100%;
+  max-width: 300px;
+}
+
+.contact-button:hover {
+  background-color: #b45309;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 767px) {
+  .animal-popup-content {
+    flex-direction: column;
+    max-height: none;
+    height: auto;
+    overflow-y: auto;
+  }
+  
+  .popup-image-container {
+    height: 40vh;
+    flex: 0 0 auto;
+  }
+  
+  .popup-details {
+    padding: 15px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    flex: 1;
+  }
+  
+  .popup-details h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+  
+  .popup-details h3 {
+    font-size: 16px;
+    margin-top: 15px;
+    margin-bottom: 8px;
+  }
+  
+  .feeding-schedule-list, .medical-history-list {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .animal-specs {
+    padding: 12px;
+  }
+  
+  .animal-feeding-schedule, .animal-medical-history, 
+  .animal-specs, .animal-owner {
+    padding: 12px;
+  }
+  
+  .contact-button {
+    padding: 14px 16px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    width: 100%;
+  }
+}
+
+/* Media Display Container */
+.media-display {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Animal Relations Section */
+.animal-relations {
+  margin-bottom: 20px;
+  background-color: #f8f8f8;
+  border-radius: 8px;
+  padding: 15px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.animal-relations h3 {
+  margin-top: 0;
+  color: #555;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+}
+
+.relations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.relation-item {
+  background-color: white;
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 3px solid #4ade80;
+  box-sizing: border-box;
+  width: 100%;
+  word-wrap: break-word;
+}
+
+.relation-name {
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.relation-details {
+  font-size: 14px;
+  color: #666;
+}
+
+.relation-species {
+  font-style: italic;
+}
+
+.relation-breed {
+  color: #555;
+}
+
+/* Map error styling */
+.map-error {
+  color: #d32f2f;
+  text-align: center;
+  padding: 20px;
+}

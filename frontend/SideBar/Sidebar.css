@@ -1,0 +1,485 @@
+/* Target rule for the app-container */
+.app-container {
+  display: flex;
+  height: auto !important;
+  min-height: 100vh;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  overflow: visible !important;
+  position: relative;
+}
+
+#sidebar-container {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 1001;
+}
+
+body > .sidebar {
+  width: 250px;
+  background: linear-gradient(to bottom right, #ffffff, #ffe9cc);
+  backdrop-filter: blur(10px);
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  position: fixed !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  overflow: hidden !important;
+  overflow-y: hidden !important; 
+  overflow-x: hidden !important;
+  border-radius: 20px;
+  max-height: 100vh !important;
+  height: 100% !important;
+  contain: layout style;
+  isolation: isolate;
+  will-change: transform; 
+  transform: translateZ(0);
+}
+
+.sidebar {
+  width: 250px;
+  background: linear-gradient(to bottom right, #ffffff, #ffe9cc);
+  backdrop-filter: blur(10px);
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  position: fixed !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  overflow: hidden !important;
+  overflow-y: hidden !important; 
+  overflow-x: hidden !important;
+  border-radius: 20px;
+  max-height: 100vh !important;
+  height: 100% !important;
+}
+
+.fixed-sidebar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  height: 100% !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
+  z-index: 1001 !important;
+  contain: layout style !important;
+  transform: translateZ(0); 
+}
+
+/* Sidebar styles */
+.sidebar-header {
+  flex-shrink: 0;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-header h1 {
+  color: #f59e0b;
+  font-size: 1.8rem;
+  margin-bottom: 30px;
+}
+
+.sidebar-header .btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #fca311;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 15px;
+  transition: all 0.3s ease;
+}
+
+.sidebar-header .btn:hover {
+  background-color: #fb8500;
+  transform: scale(1.02);
+}
+
+.sidebar-header .btn + .btn {
+  margin-top: 10px;
+}
+
+.sidebar-header .btn.active {
+  background-color: #fb8500;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 0 20px; 
+  margin: 20px -20px;
+  min-height: 0;
+  display: block !important;
+  visibility: visible !important;
+  max-height: calc(100vh - 330px); 
+  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  box-sizing: border-box;
+  overscroll-behavior: contain;
+}
+
+/* Customize the scrollbar appearance */
+.sidebar-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.filter-section {
+  margin-bottom: 20px;
+  position: sticky;
+  top: 0;
+  background: linear-gradient(to bottom right, #ffffff, #ffe9cc);
+  z-index: 1;
+  padding: 10px;
+  border-radius: 8px;
+  display: block !important;
+}
+
+.filter-section h2 {
+  color: #d97706;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  display: block;
+}
+
+.filter-options {
+  display: flex !important;
+  flex-direction: column;
+  gap: 10px;
+  padding: 5px;
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-option input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: #f59e0b;
+}
+
+.filter-option label {
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* Special styles for sidebar filters */
+#sidebar-species-filters {
+  display: flex !important;
+}
+
+.user-section {
+  background: linear-gradient(to bottom right, #ffffff, #ffe9cc);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 15px;
+  margin: 0 -20px;
+  margin-bottom: 10px; 
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  color: #6b7280;
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 10px; 
+  left: 0;
+  right: 0;
+  z-index: 2;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.user-info-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: wrap; 
+}
+
+.profile-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: white;
+  flex-shrink: 0; 
+}
+
+/* Profile info container */
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 170px; 
+  overflow: hidden; 
+  flex: 1; 
+}
+
+/* User name and email styling */
+.user-name {
+  font-weight: bold;
+  font-size: 0.9rem; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; 
+  max-width: 120px; 
+}
+
+.user-email {
+  font-size: 0.75rem; 
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px; 
+}
+
+.disconnect-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  max-width: 30px;
+  height: 30px;
+  font-size: 0.8rem;
+  margin: 0;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+  flex-shrink: 0; 
+}
+
+.disconnect-btn:hover {
+  background-color: #fb8500;
+}
+
+/* Loading indicator in sidebar */
+.loader {
+  text-align: center;
+  color: #888;
+  padding: 10px;
+  font-size: 0.9rem;
+}
+
+/* When sidebar gets very small */
+@media (max-width: 300px) {
+  .profile-info {
+    max-width: 150px;
+  }
+  
+  .user-name, .user-email {
+    max-width: 100px;
+  }
+  
+  .disconnect-btn {
+    min-width: 25px;
+    max-width: 25px;
+    height: 25px;
+    font-size: 0.7rem;
+  }
+}
+
+/* unread messages badge */
+.btn-container {
+  position: relative;
+  display: block;  
+  width: 100%;     
+}
+
+.btn-container .btn {
+  width: 100%;
+  display: block;
+}
+
+.messages-badge {
+  position: absolute;
+  top: -10px;        
+  right: -10px;      
+  background-color: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.7rem;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  z-index: 5;       
+}
+
+.btn-container:hover .messages-badge {
+  transform: scale(1.1);
+  background-color: #dc2626;
+}
+
+/* Mobile navigation styles */
+@media screen and (max-width: 768px) {
+  #sidebar-container {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 60px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    z-index: 1000 !important;
+    background: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    pointer-events: none;
+  }
+  
+  /* When sidebar is moved to body, ensure it's at the bottom */
+  body > .sidebar {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    height: 60px !important;
+    z-index: 1001 !important;
+    pointer-events: auto;
+    max-height: 60px !important;
+    overflow: visible !important;
+  }
+  
+  #sidebar-container > .sidebar {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    height: 60px !important;
+    z-index: 1001 !important;
+    pointer-events: auto;
+  }
+  
+  .sidebar {
+    background: linear-gradient(to right, #f59e0b, #f97316) !important;
+    border-radius: 0 !important;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  
+  .sidebar-header,
+  .sidebar-content,
+  .user-section {
+    display: none !important;
+  }
+  
+  .mobile-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    padding: 0 10px !important;
+  }
+  
+  .mobile-nav-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    color: white !important;
+    text-decoration: none !important;
+    padding: 8px 0 !important; 
+    font-size: 0.8rem !important;
+    position: relative !important;
+    flex: 1 !important;
+  }
+  
+  .profile-circle {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 1rem !important;
+    margin-bottom: 2px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .mobile-nav-item span {
+    font-size: 0.7rem !important;
+    margin-top: 2px !important;
+    line-height: 1 !important;
+  }
+  
+  .mobile-nav-item.active {
+    color: #fff !important;
+    font-weight: bold !important;
+  }
+  
+  .mobile-badge {
+    position: absolute !important;
+    top: -4px !important;
+    right: -4px !important;
+    background-color: #ef4444 !important;
+    color: white !important;
+    border-radius: 50% !important;
+    width: 16px !important;
+    height: 16px !important;
+    font-size: 0.7rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding-bottom: 70px !important; 
+  }
+  
+  .sidebar-content {
+    display: none !important; /* Hide on mobile */
+  }
+}

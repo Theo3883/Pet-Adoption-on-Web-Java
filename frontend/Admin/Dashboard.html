@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- security headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://localhost:3000; connect-src 'self' http://localhost:3000">
+    <meta name="csrf-token" id="csrf-token">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    
+    <title>Admin Dashboard</title>
+    
+    <!-- Preconnect to important domains -->
+    <link rel="dns-prefetch" href="http://localhost:3000">
+    
+    <!-- Inline critical CSS -->
+    <style>
+      /* Critical dashboard styles */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f5f5f5;
+        color: #333;
+      }
+      
+      .dashboard-container {
+        display: flex;
+        min-height: 100vh;
+      }
+      
+      .sidebar {
+        width: 250px;
+        background-color: #2c3e50;
+        color: #fff;
+        padding: 20px 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: fixed;
+        height: 100vh;
+      }
+      
+      .main-content {
+        flex: 1;
+        margin-left: 250px;
+        padding: 20px;
+      }
+      
+      .content-section {
+        display: none;
+      }
+      
+      .content-section.active {
+        display: block;
+      }
+    </style>
+    
+    <!-- Non-critical CSS loaded asynchronously -->
+    <link rel="preload" href="Dashboard.css" as="style">
+    <noscript><link rel="stylesheet" href="Dashboard.css"></noscript>
+    
+    <link rel="preload" href="Users.css" as="style">
+    <noscript><link rel="stylesheet" href="Users.css"></noscript>
+    
+    <link rel="preload" href="Pets.css" as="style">
+    <noscript><link rel="stylesheet" href="Pets.css"></noscript>
+    
+    <link rel="preload" href="Chart.css" as="style">
+    <noscript><link rel="stylesheet" href="Chart.css"></noscript>
+    
+    <!-- Safe CSS loading script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const styleSheets = [
+          document.querySelector('link[href="Dashboard.css"]'),
+          document.querySelector('link[href="Users.css"]'),
+          document.querySelector('link[href="Pets.css"]'),
+          document.querySelector('link[href="Chart.css"]')
+        ];
+        
+        styleSheets.forEach(styleSheet => {
+          if (styleSheet) {
+            styleSheet.rel = 'stylesheet';
+          }
+        });
+      });
+    </script>
+    
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js" as="script">
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js" defer></script>
+  <link rel="stylesheet" href="../utils/mobileStyles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>Pet Adoption</h2>
+                <p>Admin Panel</p>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li class="active"><a href="#" data-section="overview">Overview</a></li>
+                    <li><a href="#" data-section="users">Users</a></li>
+                    <li><a href="#" data-section="pets">Pets</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </aside>
+        
+        <main class="main-content">
+            <header class="dashboard-header">
+                <h1>Admin Dashboard</h1>
+                <div class="header-actions">
+                    <button id="refreshData" class="refresh-btn" title="Refresh data">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <div class="admin-profile">
+                        <span id="adminEmail">admin@example.com</span>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="content-sections">
+                <!-- Overview Section -->
+                <section id="overview" class="content-section active">
+                    <h2>Dashboard Overview</h2>
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <h3>Total Users</h3>
+                            <div class="stat-value" id="totalUsers">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Total Pets</h3>
+                            <div class="stat-value" id="totalPets">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="charts-container">
+                        <div class="chart-box">
+                            <div id="users-chart"></div>
+                        </div>
+                        <div class="chart-box">
+                            <div id="pets-chart"></div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Users Section -->
+                <section id="users" class="content-section">
+                    <h2>User Management</h2>
+                    <div class="table-container">
+                        <!-- User table will go here -->
+                    </div>
+                </section>
+                
+                <!-- Pets Section -->
+                <section id="pets" class="content-section">
+                    <h2>Pet Management</h2>
+                    <div class="section-controls">
+                        <div class="search-filter">
+                            <input type="text" id="petSearch" placeholder="Search pets..." class="search-input">
+                            <select id="petSpeciesFilter" class="filter-select">
+                                <option value="">All Species</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <!-- Pet table will go here -->
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="Chart.js" defer></script>
+    <script type="module" src="Users.js" defer></script>
+    <script type="module" src="Pets.js" defer></script>
+    <script type="module" src="Dashboard.js" defer></script>
+    <script type="module" src="../utils/globalSecurity.js"></script>
+</body>
+</html>
