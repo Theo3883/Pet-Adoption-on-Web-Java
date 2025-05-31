@@ -368,12 +368,24 @@ export function showAnimalDetailsPopup(details) {
       restoreScrolling();
     }
   });
-
   // Set up contact owner button
   const contactButton = popupContent.querySelector('.contact-button');
+  console.log('Contact button found:', !!contactButton);
+  console.log('Owner data for contact button:', owner);
+  console.log('Owner USERID for contact button:', owner?.USERID);
+  
   if (contactButton && owner && owner.USERID) {
+    console.log('Setting up contact button click handler');
     contactButton.addEventListener('click', () => {
+      console.log('Contact button clicked!');
+      console.log('Redirecting to Messages with userId:', owner.USERID, 'and name:', ownerName);
       window.location.href = `../Messages/Messages.html?userId=${owner.USERID}&name=${encodeURIComponent(ownerName)}`;
+    });
+  } else {
+    console.log('Contact button not set up because:', {
+      hasContactButton: !!contactButton,
+      hasOwner: !!owner,
+      hasOwnerUSERID: !!(owner && owner.USERID)
     });
   }
 }

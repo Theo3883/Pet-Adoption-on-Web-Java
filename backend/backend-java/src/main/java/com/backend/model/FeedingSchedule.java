@@ -43,18 +43,14 @@ public class FeedingSchedule {
             return List.of();
         }
         
-        // Handle Oracle VARRAY format: extract timestamp strings
-        // The format from Oracle might be like: "FEEDING_TIME_ARRAY('08:00:00','18:00:00')"
         String cleanTime = feedingTime;
         
-        // Remove VARRAY wrapper if present
         if (cleanTime.contains("FEEDING_TIME_ARRAY(")) {
             cleanTime = cleanTime.replaceAll("FEEDING_TIME_ARRAY\\(", "")
                                  .replaceAll("\\)$", "")
                                  .replaceAll("'", "");
         }
         
-        // Handle timestamp format if present (extract just time part)
         if (cleanTime.contains(",")) {
             return Arrays.stream(cleanTime.split(","))
                          .map(String::trim)
@@ -74,12 +70,10 @@ public class FeedingSchedule {
             return "";
         }
         
-        // If it's already in HH:MM:SS format, return as is
         if (timestampOrTime.matches("\\d{1,2}:\\d{2}:\\d{2}")) {
             return timestampOrTime;
         }
         
-        // If it contains date and time, extract time part
         if (timestampOrTime.contains(" ")) {
             String[] parts = timestampOrTime.split(" ");
             if (parts.length > 1 && parts[1].matches("\\d{1,2}:\\d{2}:\\d{2}.*")) {
@@ -87,13 +81,12 @@ public class FeedingSchedule {
             }
         }
         
-        // Try to extract time pattern from any format
         String timePattern = timestampOrTime.replaceAll(".*?(\\d{1,2}:\\d{2}:\\d{2}).*", "$1");
         if (timePattern.matches("\\d{1,2}:\\d{2}:\\d{2}")) {
             return timePattern;
         }
         
-        return timestampOrTime; // Return as is if no pattern found
+        return timestampOrTime;
     }
     
     @Transient

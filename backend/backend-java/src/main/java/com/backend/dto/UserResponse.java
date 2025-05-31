@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 @Data
 public class UserResponse {
     
+    @JsonProperty("USERID")
     private Long userId;
     
     @JsonProperty("FIRSTNAME")

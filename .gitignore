@@ -1,2 +1,26 @@
-.vscode
+# IDE Files
+.vscode/
 .DS_Store
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Build artifacts
+build/
+dist/
+*.jar
+*.war
+*.ear
+*.class
+
+# Logs
+*.log
+logs/
+
+# OS
+Thumbs.db
