@@ -26,47 +26,54 @@ import java.util.stream.Collectors;
 @EnableAsync
 @Slf4j
 public class MessageService {
-    private final MessageRepository messageRepository;
+      private final MessageRepository messageRepository;
     private final UserRepository userRepository;
-
+    
+    // Synchronous method for immediate message sending
     public Long sendMessage(Long senderId, Long receiverId, String content) {
         Optional<User> sender = userRepository.findById(senderId);
         Optional<User> receiver = userRepository.findById(receiverId);
-
+        
         if (sender.isEmpty() || receiver.isEmpty()) {
             throw new RuntimeException("User not found");
         }
-
+        
         Message message = new Message();
         message.setSender(sender.get());
         message.setReceiver(receiver.get());
         message.setContent(content);
         message.setTimestamp(LocalDateTime.now());
         message.setIsRead(false);
-
+        
         Message savedMessage = messageRepository.save(message);
+          // Async background processing
         processMessageAsync(savedMessage.getMessageId(), senderId, receiverId);
-
+        
         return savedMessage.getMessageId();
-    }
-
+    }    // Async method for background message processing
     @Async("messageThreadPoolTaskExecutor")
     public CompletableFuture<Void> processMessageAsync(Long messageId, Long senderId, Long receiverId) {
         return CompletableFuture.runAsync(() -> {
             try {
                 log.info("Processing message {} asynchronously", messageId);
+                
+                // Future processing can be added here if needed
+                // For now, just log the successful processing
+                
                 log.info("Message processing completed for message {}", messageId);
+                
             } catch (Exception e) {
                 log.error("Error processing message {} asynchronously", messageId, e);
             }
         });
     }
-
+    
+    // Enhanced conversation loading with parallel processing
     public CompletableFuture<List<Map<String, Object>>> getConversationAsync(Long userId, Long otherUserId) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 List<Message> messages = messageRepository.findConversation(userId, otherUserId);
-
+                
                 return messages.parallelStream().map(message -> {
                     Map<String, Object> messageMap = new HashMap<>();
                     messageMap.put("MESSAGEID", message.getMessageId());
@@ -75,12 +82,13 @@ public class MessageService {
                     messageMap.put("CONTENT", message.getContent());
                     messageMap.put("TIMESTAMP", message.getTimestamp());
                     messageMap.put("ISREAD", message.getIsRead() ? 1 : 0);
-
+                    
+                    // Add sender and receiver name details for frontend
                     messageMap.put("SENDERFIRSTNAME", message.getSender().getFirstName());
                     messageMap.put("SENDERLASTNAME", message.getSender().getLastName());
                     messageMap.put("RECEIVERFIRSTNAME", message.getReceiver().getFirstName());
                     messageMap.put("RECEIVERLASTNAME", message.getReceiver().getLastName());
-
+                    
                     return messageMap;
                 }).collect(Collectors.toList());
             } catch (Exception e) {
@@ -89,10 +97,11 @@ public class MessageService {
             }
         });
     }
-
+    
+    // Synchronous version for backward compatibility
     public List<Map<String, Object>> getConversation(Long userId, Long otherUserId) {
         List<Message> messages = messageRepository.findConversation(userId, otherUserId);
-
+        
         return messages.stream().map(message -> {
             Map<String, Object> messageMap = new HashMap<>();
             messageMap.put("MESSAGEID", message.getMessageId());
@@ -101,35 +110,39 @@ public class MessageService {
             messageMap.put("CONTENT", message.getContent());
             messageMap.put("TIMESTAMP", message.getTimestamp());
             messageMap.put("ISREAD", message.getIsRead() ? 1 : 0);
-
+            
+            // Add sender and receiver name details for frontend
             messageMap.put("SENDERFIRSTNAME", message.getSender().getFirstName());
             messageMap.put("SENDERLASTNAME", message.getSender().getLastName());
             messageMap.put("RECEIVERFIRSTNAME", message.getReceiver().getFirstName());
             messageMap.put("RECEIVERLASTNAME", message.getReceiver().getLastName());
-
+            
             return messageMap;
         }).collect(Collectors.toList());
     }
-
+    
+    // Enhanced conversations loading with parallel processing
     public CompletableFuture<List<Map<String, Object>>> getConversationsAsync(Long userId) {
         return CompletableFuture.supplyAsync(() -> {
-            try {
-                CompletableFuture<List<Object[]>> senderFuture = CompletableFuture
-                        .supplyAsync(() -> messageRepository.findConversationsAsSender(userId));
-
-                CompletableFuture<List<Object[]>> receiverFuture = CompletableFuture
-                        .supplyAsync(() -> messageRepository.findConversationsAsReceiver(userId));
+            try {                // Parallel execution of both queries
+                CompletableFuture<List<Object[]>> senderFuture = CompletableFuture.supplyAsync(() -> 
+                    messageRepository.findConversationsAsSender(userId));
+                
+                CompletableFuture<List<Object[]>> receiverFuture = CompletableFuture.supplyAsync(() -> 
+                    messageRepository.findConversationsAsReceiver(userId));
+                  // Wait for both queries to complete
                 CompletableFuture.allOf(senderFuture, receiverFuture).join();
-
+                
                 List<Object[]> senderResults = senderFuture.join();
                 List<Object[]> receiverResults = receiverFuture.join();
-
+                
                 Map<Long, Map<String, Object>> conversationMap = new HashMap<>();
-
+                
+                // Process sender results
                 senderResults.parallelStream().forEach(result -> {
                     User otherUser = (User) result[0];
                     LocalDateTime lastMessageTime = (LocalDateTime) result[1];
-
+                    
                     synchronized (conversationMap) {
                         Map<String, Object> conversation = new HashMap<>();
                         conversation.put("OTHERUSERID", otherUser.getUserId());
@@ -138,15 +151,16 @@ public class MessageService {
                         conversation.put("LASTNAME", otherUser.getLastName());
                         conversation.put("EMAIL", otherUser.getEmail());
                         conversation.put("LASTMESSAGETIME", lastMessageTime);
-
+                        
                         conversationMap.put(otherUser.getUserId(), conversation);
                     }
                 });
-
+                
+                // Process receiver results
                 receiverResults.parallelStream().forEach(result -> {
                     User otherUser = (User) result[0];
                     LocalDateTime lastMessageTime = (LocalDateTime) result[1];
-
+                    
                     synchronized (conversationMap) {
                         if (conversationMap.containsKey(otherUser.getUserId())) {
                             Map<String, Object> existing = conversationMap.get(otherUser.getUserId());
@@ -162,34 +176,36 @@ public class MessageService {
                             conversation.put("LASTNAME", otherUser.getLastName());
                             conversation.put("EMAIL", otherUser.getEmail());
                             conversation.put("LASTMESSAGETIME", lastMessageTime);
-
+                            
                             conversationMap.put(otherUser.getUserId(), conversation);
                         }
                     }
                 });
-
+                
+                // Sort conversations by last message time
                 return conversationMap.values().stream()
                         .sorted((a, b) -> ((LocalDateTime) b.get("LASTMESSAGETIME"))
                                 .compareTo((LocalDateTime) a.get("LASTMESSAGETIME")))
                         .collect(Collectors.toList());
-
+                        
             } catch (Exception e) {
                 log.error("Error loading conversations for user {}", userId, e);
                 throw new CompletionException(e);
             }
         });
     }
-
+    
+    // Synchronous version for backward compatibility
     public List<Map<String, Object>> getConversations(Long userId) {
         List<Object[]> senderResults = messageRepository.findConversationsAsSender(userId);
         List<Object[]> receiverResults = messageRepository.findConversationsAsReceiver(userId);
-
+    
         Map<Long, Map<String, Object>> conversationMap = new HashMap<>();
-
+        
         for (Object[] result : senderResults) {
             User otherUser = (User) result[0];
             LocalDateTime lastMessageTime = (LocalDateTime) result[1];
-
+            
             Map<String, Object> conversation = new HashMap<>();
             conversation.put("OTHERUSERID", otherUser.getUserId());
             conversation.put("OTHERUSERNAME", otherUser.getFirstName() + " " + otherUser.getLastName());
@@ -197,14 +213,14 @@ public class MessageService {
             conversation.put("LASTNAME", otherUser.getLastName());
             conversation.put("EMAIL", otherUser.getEmail());
             conversation.put("LASTMESSAGETIME", lastMessageTime);
-
+            
             conversationMap.put(otherUser.getUserId(), conversation);
         }
-
+        
         for (Object[] result : receiverResults) {
             User otherUser = (User) result[0];
             LocalDateTime lastMessageTime = (LocalDateTime) result[1];
-
+            
             if (conversationMap.containsKey(otherUser.getUserId())) {
                 Map<String, Object> existing = conversationMap.get(otherUser.getUserId());
                 LocalDateTime existingTime = (LocalDateTime) existing.get("LASTMESSAGETIME");
@@ -219,40 +235,43 @@ public class MessageService {
                 conversation.put("LASTNAME", otherUser.getLastName());
                 conversation.put("EMAIL", otherUser.getEmail());
                 conversation.put("LASTMESSAGETIME", lastMessageTime);
-
+                
                 conversationMap.put(otherUser.getUserId(), conversation);
             }
         }
-
+        
         return conversationMap.values().stream()
                 .sorted((a, b) -> ((LocalDateTime) b.get("LASTMESSAGETIME"))
                         .compareTo((LocalDateTime) a.get("LASTMESSAGETIME")))
                 .collect(Collectors.toList());
     }
-
+    
+    // Async mark as read with background processing
     @Async("messageThreadPoolTaskExecutor")
     public CompletableFuture<Void> markAsReadAsync(Long userId, Long otherUserId) {
         return CompletableFuture.runAsync(() -> {
             try {
                 messageRepository.markAsRead(userId, otherUserId);
                 log.info("Messages marked as read for user {} from user {}", userId, otherUserId);
-
+                
                 // Additional async processing can be added here:
                 // - Update conversation timestamps
                 // - Analytics tracking
                 // - Real-time notifications
-
+                
             } catch (Exception e) {
                 log.error("Error marking messages as read for user {} from user {}", userId, otherUserId, e);
                 throw new CompletionException(e);
             }
         });
     }
-
+    
+    // Synchronous version for backward compatibility
     public void markAsRead(Long userId, Long otherUserId) {
         messageRepository.markAsRead(userId, otherUserId);
     }
-
+    
+    // Async unread count with caching capability
     @Async("messageThreadPoolTaskExecutor")
     public CompletableFuture<Long> getUnreadCountAsync(Long userId) {
         return CompletableFuture.supplyAsync(() -> {
@@ -266,7 +285,8 @@ public class MessageService {
             }
         });
     }
-
+    
+    // Synchronous version for backward compatibility
     public Long getUnreadCount(Long userId) {
         return messageRepository.countUnreadMessages(userId);
     }

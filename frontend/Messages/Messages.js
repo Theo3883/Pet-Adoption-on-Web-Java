@@ -553,7 +553,7 @@ async function fetchContactOnlineStatus(userId) {
   try {
     const token = localStorage.getItem('Token');
     if (!token || !userId) return;
-    const response = await fetch(`http://localhost:3000/users/${userId}/online-status`, {
+    const response = await fetch(`http://localhost:3000/messages/online-status/${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -562,7 +562,7 @@ async function fetchContactOnlineStatus(userId) {
     });
     if (!response.ok) throw new Error('Failed to fetch online status');
     const data = await response.json();
-    updateContactOnlineStatus(data.online === true);
+    updateContactOnlineStatus(data.isOnline === true);
   } catch (e) {
     updateContactOnlineStatus(false);
   }
