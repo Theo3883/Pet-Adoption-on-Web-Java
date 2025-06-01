@@ -143,15 +143,11 @@ export default class Sidebar {
   }
   
   async initialize() {
-    this.updateNavigation();
-
-    if (this.user) {
+    this.updateNavigation();    if (this.user) {
       await this.fetchUnreadMessageCount();
-      
-      // Set up polling for unread messages every 30 seconds
       this.unreadMessagesInterval = setInterval(() => {
         this.fetchUnreadMessageCount();
-      }, 30000);
+      }, 3000);
     }
 
     if (!this.isMobile) {

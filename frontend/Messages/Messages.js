@@ -34,15 +34,13 @@ async function initialize() {
   // Set up mutation observer to detect when messages are added and scroll to bottom
   setupScrollObserver();
   
-  await loadConversations(true);
-  
-  // Set up polling for new messages (every 30 seconds)
+  await loadConversations(true);  // Set up polling for new messages (every 2 seconds for faster updates)
   pollingInterval = setInterval(async () => {
     if (currentConversationUser) {
       await loadConversation(currentConversationUser.userId, false);
     }
     await loadConversations(false);
-  }, 30000); 
+  }, 2000);
   
   window.addEventListener('beforeunload', () => {
     if (pollingInterval) {

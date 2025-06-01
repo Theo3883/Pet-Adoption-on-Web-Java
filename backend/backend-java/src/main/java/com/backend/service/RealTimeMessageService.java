@@ -68,10 +68,10 @@ public class RealTimeMessageService {
                 CopyOnWriteArrayList<String> userSessions = activeUserSessions.get(userId);
                 if (userSessions != null && !userSessions.isEmpty()) {
                     log.info("Sending real-time notification to {} sessions for user {}", userSessions.size(), userId);
-
                     userSessions.parallelStream().forEach(sessionId -> {
                         try {
-                            simulateRealTimeUpdate(sessionId, messageData);
+                            log.debug("Real-time update sent to session {}: {}", sessionId,
+                                    messageData.getClass().getSimpleName());
                         } catch (Exception e) {
                             log.error("Error sending real-time update to session {}", sessionId, e);
                         }
@@ -92,11 +92,6 @@ public class RealTimeMessageService {
         return CompletableFuture.runAsync(() -> {
             try {
                 log.info("User {} is now {}", userId, isOnline ? "online" : "offline");
-                Thread.sleep(50);
-
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.error("User status notification interrupted for user {}", userId);
             } catch (Exception e) {
                 log.error("Error notifying user status change for user {}", userId, e);
             }
@@ -110,13 +105,13 @@ public class RealTimeMessageService {
                 log.debug("User {} {} typing to user {}", senderId, isTyping ? "started" : "stopped", receiverId);
                 CopyOnWriteArrayList<String> receiverSessions = activeUserSessions.get(receiverId);
                 if (receiverSessions != null && !receiverSessions.isEmpty()) {
-
                     Map<String, Object> typingData = new HashMap<>();
                     typingData.put("senderId", senderId);
                     typingData.put("isTyping", isTyping);
                     typingData.put("type", "typing_indicator");
+
                     receiverSessions.parallelStream().forEach(sessionId -> {
-                        simulateRealTimeUpdate(sessionId, typingData);
+                        log.debug("Typing indicator sent to session {}", sessionId);
                     });
                 }
 
@@ -154,32 +149,16 @@ public class RealTimeMessageService {
         });
     }
 
-    private void simulateRealTimeUpdate(String sessionId, Object data) {
-        try {
-            Thread.sleep(10);
-            log.debug("Real-time update sent to session {}: {}", sessionId, data.getClass().getSimpleName());
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
     @Async("generalThreadPoolTaskExecutor")
     public CompletableFuture<Void> cleanupInactiveSessionsAsync() {
         return CompletableFuture.runAsync(() -> {
             try {
                 log.info("Starting cleanup of inactive sessions");
-
-                // This would typically check session heartbeats or last activity
-                // and remove inactive sessions
-
-                // Simulate cleanup process
-                Thread.sleep(100);
-
+                activeUserSessions.entrySet().removeIf(entry -> {
+                    CopyOnWriteArrayList<String> sessions = entry.getValue();
+                    return sessions.isEmpty();
+                });
                 log.info("Session cleanup completed");
-
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.error("Session cleanup interrupted");
             } catch (Exception e) {
                 log.error("Error during session cleanup", e);
             }

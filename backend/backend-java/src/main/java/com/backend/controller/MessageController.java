@@ -20,10 +20,10 @@ import java.util.concurrent.ExecutionException;
 @CrossOrigin(origins = "*")
 @Slf4j
 public class MessageController {
-      private final MessageService messageService;
+    private final MessageService messageService;
     private final JwtService jwtService;
     private final RealTimeMessageService realTimeMessageService;
-    
+
     @PostMapping("/messages/send")
     public ResponseEntity<?> sendMessage(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
         try {
@@ -33,30 +33,29 @@ public class MessageController {
                 error.put("error", "User authentication required");
                 return ResponseEntity.status(401).body(error);
             }
-            
+
             Long receiverId = Long.valueOf(request.get("receiverId").toString());
             String content = (String) request.get("content");
-            
+
             if (receiverId == null || content == null) {
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "Missing required fields");
                 return ResponseEntity.badRequest().body(error);
             }
-              Long messageId = messageService.sendMessage(senderId, receiverId, content);
-            
-            // Send real-time notification to receiver asynchronously
+            Long messageId = messageService.sendMessage(senderId, receiverId, content);
+
             Map<String, Object> messageData = new HashMap<>();
             messageData.put("type", "new_message");
             messageData.put("senderId", senderId);
             messageData.put("messageId", messageId);
             messageData.put("content", content);
-            
+
             realTimeMessageService.sendRealTimeNotificationAsync(receiverId, messageData);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Message sent successfully");
             response.put("messageId", messageId);
-            
+
             return ResponseEntity.status(201).body(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
@@ -64,7 +63,8 @@ public class MessageController {
             return ResponseEntity.status(500).body(error);
         }
     }
-      @PostMapping("/messages/conversation")
+
+    @PostMapping("/messages/conversation")
     public ResponseEntity<?> getConversation(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
         try {
             Long userId = extractUserIdFromToken(httpRequest);
@@ -75,7 +75,7 @@ public class MessageController {
             }
 
             Long otherUserId = Long.valueOf(request.get("otherUserId").toString());
-            
+
             if (otherUserId == null) {
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "Missing other user ID");
@@ -91,10 +91,10 @@ public class MessageController {
             return ResponseEntity.status(500).body(error);
         }
     }
-    
-    // New async endpoint for conversation loading
+
     @PostMapping("/messages/conversation/async")
-    public ResponseEntity<?> getConversationAsync(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
+    public ResponseEntity<?> getConversationAsync(@RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         try {
             Long userId = extractUserIdFromToken(httpRequest);
             if (userId == null) {
@@ -104,20 +104,18 @@ public class MessageController {
             }
 
             Long otherUserId = Long.valueOf(request.get("otherUserId").toString());
-            
+
             if (otherUserId == null) {
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "Missing other user ID");
                 return ResponseEntity.badRequest().body(error);
             }
 
-            // Use async processing with parallel operations
-            CompletableFuture<List<Map<String, Object>>> messagesFuture = 
-                messageService.getConversationAsync(userId, otherUserId);
-            
-            // Mark messages as read asynchronously in the background
+            CompletableFuture<List<Map<String, Object>>> messagesFuture = messageService.getConversationAsync(userId,
+                    otherUserId);
+
             messageService.markAsReadAsync(userId, otherUserId);
-            
+
             List<Map<String, Object>> messages = messagesFuture.get();
             return ResponseEntity.ok(messages);
         } catch (ExecutionException | InterruptedException e) {
@@ -127,7 +125,8 @@ public class MessageController {
             return ResponseEntity.status(500).body(error);
         }
     }
-      @GetMapping("/messages/conversations")
+
+    @GetMapping("/messages/conversations")
     public ResponseEntity<?> getConversations(HttpServletRequest httpRequest) {
         try {
             Long userId = extractUserIdFromToken(httpRequest);
@@ -146,8 +145,7 @@ public class MessageController {
             return ResponseEntity.status(500).body(error);
         }
     }
-    
-    // New async endpoint for improved performance
+
     @GetMapping("/messages/conversations/async")
     public ResponseEntity<?> getConversationsAsync(HttpServletRequest httpRequest) {
         try {
@@ -158,27 +156,23 @@ public class MessageController {
                 return ResponseEntity.status(401).body(error);
             }
 
-            // Use async processing for better performance
-            CompletableFuture<List<Map<String, Object>>> conversationsFuture = 
-                messageService.getConversationsAsync(userId);
-            
-            // Also get unread count in parallel
-            CompletableFuture<Long> unreadCountFuture = 
-                messageService.getUnreadCountAsync(userId);
-            
-            // Wait for both operations to complete
+            CompletableFuture<List<Map<String, Object>>> conversationsFuture = messageService
+                    .getConversationsAsync(userId);
+
+            CompletableFuture<Long> unreadCountFuture = messageService.getUnreadCountAsync(userId);
+
             CompletableFuture<Void> allOperations = CompletableFuture.allOf(
-                conversationsFuture, unreadCountFuture);
-            
+                    conversationsFuture, unreadCountFuture);
+
             allOperations.join();
-            
+
             List<Map<String, Object>> conversations = conversationsFuture.get();
             Long unreadCount = unreadCountFuture.get();
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("conversations", conversations);
             response.put("totalUnreadCount", unreadCount);
-            
+
             return ResponseEntity.ok(response);
         } catch (ExecutionException | InterruptedException e) {
             log.error("Error getting conversations async for user", e);
@@ -187,8 +181,10 @@ public class MessageController {
             return ResponseEntity.status(500).body(error);
         }
     }
-      @PostMapping("/messages/read")
-    public ResponseEntity<?> markMessagesAsRead(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
+
+    @PostMapping("/messages/read")
+    public ResponseEntity<?> markMessagesAsRead(@RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         try {
             Long userId = extractUserIdFromToken(httpRequest);
             if (userId == null) {
@@ -198,14 +194,13 @@ public class MessageController {
             }
 
             Long otherUserId = Long.valueOf(request.get("otherUserId").toString());
-            
+
             if (otherUserId == null) {
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "Missing other user ID");
                 return ResponseEntity.badRequest().body(error);
             }
 
-            // Use async processing for better responsiveness
             messageService.markAsReadAsync(userId, otherUserId);
 
             Map<String, String> response = new HashMap<>();
@@ -218,7 +213,8 @@ public class MessageController {
             return ResponseEntity.status(500).body(error);
         }
     }
-      @GetMapping("/messages/unread-count")
+
+    @GetMapping("/messages/unread-count")
     public ResponseEntity<?> getUnreadCount(HttpServletRequest httpRequest) {
         try {
             Long userId = extractUserIdFromToken(httpRequest);
@@ -228,7 +224,6 @@ public class MessageController {
                 return ResponseEntity.status(401).body(error);
             }
 
-            // Use async processing for potentially better performance
             CompletableFuture<Long> countFuture = messageService.getUnreadCountAsync(userId);
             Long count = countFuture.get();
 
@@ -242,7 +237,7 @@ public class MessageController {
             return ResponseEntity.status(500).body(error);
         }
     }
-    
+
     @GetMapping("/messages/dashboard")
     public ResponseEntity<?> getMessagesDashboard(HttpServletRequest httpRequest) {
         try {
@@ -253,30 +248,25 @@ public class MessageController {
                 return ResponseEntity.status(401).body(error);
             }
 
-            // Execute multiple operations concurrently for dashboard data
-            CompletableFuture<List<Map<String, Object>>> conversationsFuture = 
-                messageService.getConversationsAsync(userId);
-            
-            CompletableFuture<Long> unreadCountFuture = 
-                messageService.getUnreadCountAsync(userId);
-            
-            // Wait for all operations to complete
+            CompletableFuture<List<Map<String, Object>>> conversationsFuture = messageService
+                    .getConversationsAsync(userId);
+
+            CompletableFuture<Long> unreadCountFuture = messageService.getUnreadCountAsync(userId);
+
             CompletableFuture<Void> allOperations = CompletableFuture.allOf(
-                conversationsFuture, unreadCountFuture);
-            
+                    conversationsFuture, unreadCountFuture);
+
             allOperations.join();
-            
-            // Get results
+
             List<Map<String, Object>> conversations = conversationsFuture.get();
             Long unreadCount = unreadCountFuture.get();
-            
-            // Build dashboard response
+
             Map<String, Object> dashboard = new HashMap<>();
             dashboard.put("conversations", conversations);
             dashboard.put("totalUnreadCount", unreadCount);
             dashboard.put("totalConversations", conversations.size());
             dashboard.put("hasUnreadMessages", unreadCount > 0);
-            
+
             return ResponseEntity.ok(dashboard);
         } catch (ExecutionException | InterruptedException e) {
             log.error("Error getting messages dashboard", e);
@@ -284,7 +274,9 @@ public class MessageController {
             error.put("error", "Internal Server Error");
             return ResponseEntity.status(500).body(error);
         }
-    }    private Long extractUserIdFromToken(HttpServletRequest request) {
+    }
+
+    private Long extractUserIdFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
@@ -297,11 +289,6 @@ public class MessageController {
         return null;
     }
 
-    // New threading-enhanced endpoints
-
-    /**
-     * Register user session for real-time updates
-     */
     @PostMapping("/messages/session/register")
     public ResponseEntity<?> registerSession(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
         try {
@@ -333,9 +320,6 @@ public class MessageController {
         }
     }
 
-    /**
-     * Handle typing indicators
-     */
     @PostMapping("/messages/typing")
     public ResponseEntity<?> handleTyping(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
         try {
@@ -369,9 +353,6 @@ public class MessageController {
         }
     }
 
-    /**
-     * Get online status of a user
-     */
     @GetMapping("/messages/online-status/{userId}")
     public ResponseEntity<?> getOnlineStatus(@PathVariable Long userId, HttpServletRequest httpRequest) {
         try {
@@ -398,9 +379,6 @@ public class MessageController {
         }
     }
 
-    /**
-     * Get online users count
-     */
     @GetMapping("/messages/online-count")
     public ResponseEntity<?> getOnlineUsersCount(HttpServletRequest httpRequest) {
         try {

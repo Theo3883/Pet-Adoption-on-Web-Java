@@ -14,7 +14,7 @@ public class AsyncConfig {
     @Bean(name = "messageThreadPoolTaskExecutor")
     public Executor messageThreadPoolTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-          executor.setCorePoolSize(5);
+        executor.setCorePoolSize(5);
         executor.setMaxPoolSize(20);
         executor.setQueueCapacity(200);
         executor.setThreadNamePrefix("Message-");
@@ -22,15 +22,15 @@ public class AsyncConfig {
         executor.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(30);
-        
+
         executor.initialize();
         return executor;
     }
-    
+
     @Bean(name = "generalThreadPoolTaskExecutor")
     public Executor generalThreadPoolTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-          executor.setCorePoolSize(3);
+        executor.setCorePoolSize(3);
         executor.setMaxPoolSize(10);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("General-");
@@ -38,7 +38,7 @@ public class AsyncConfig {
         executor.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(30);
-        
+
         executor.initialize();
         return executor;
     }
