@@ -1,5 +1,6 @@
 import Sidebar from '../SideBar/Sidebar.js';
 import { requireAuth } from '../utils/authUtils.js';
+import { initializeSession } from '../utils/sessionUtils.js';
 
 const API_URL = 'http://localhost:3000';
 let user;
@@ -14,6 +15,8 @@ async function initialize() {
   user = requireAuth();
   if (!user) return;
   
+  // Initialize session for online status tracking
+  await initializeSession();
  
   document.getElementById('sidebar-container').innerHTML = Sidebar.render('newsletter');
   new Sidebar('newsletter');

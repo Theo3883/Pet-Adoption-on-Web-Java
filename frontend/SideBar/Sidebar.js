@@ -1,63 +1,50 @@
-import userModel from '../models/User.js';
-import { requireAuth } from '../utils/authUtils.js';
-
-async function unregisterUserSession() {
-  try {
-    const token = localStorage.getItem('Token');
-    const sessionId = localStorage.getItem('sessionId');
-    
-    if (!token || !sessionId) return;
-
-    await fetch('http://localhost:3000/messages/unregister-session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ sessionId: sessionId })
-    });
-    
-    // Clean up session storage
-    localStorage.removeItem('sessionId');
-    console.log('User session unregistered');
-  } catch (error) {
-    console.error('Error unregistering user session:', error);
-  }
-}
+import userModel from "../models/User.js";
+import { requireAuth } from "../utils/authUtils.js";
+import {
+  unregisterUserSession,
+  initializeSession,
+} from "../utils/sessionUtils.js";
 
 export default class Sidebar {
   constructor(activePage) {
-    this.activePage = activePage; 
+    this.activePage = activePage;
     this.user = requireAuth();
     this.unreadCount = 0;
     this.isMobile = window.innerWidth < 768;
-    
+
     window.sidebarInstance = this;
-    
+
     if (!this.user) return;
-    
+
     this.initialize();
-    
+
     // Listen for viewport changes
-    window.addEventListener('resize', () => {
+    window.addEventListener("resize", () => {
       const wasMobile = this.isMobile;
       this.isMobile = window.innerWidth < 768;
-      
+
       if (wasMobile !== this.isMobile) {
-        console.log("Viewport changed to:", this.isMobile ? "mobile" : "desktop");
+        console.log(
+          "Viewport changed to:",
+          this.isMobile ? "mobile" : "desktop"
+        );
         this.updateNavigation();
       }
     });
-    
-    window.addEventListener('load', () => {
-      this.updateNavigation();
-    }, { once: true });
-    
+
+    window.addEventListener(
+      "load",
+      () => {
+        this.updateNavigation();
+      },
+      { once: true }
+    );
+
     // Monitor scrolling with higher priority
     if (!this.isMobile) {
       let lastScrollY = window.scrollY;
       let ticking = false;
-      
+
       const scrollHandler = () => {
         const currentScrollY = window.scrollY;
         if (!ticking) {
@@ -69,103 +56,101 @@ export default class Sidebar {
           ticking = true;
         }
       };
-      
-      window.addEventListener('scroll', scrollHandler, { passive: true });
-      
+
+      window.addEventListener("scroll", scrollHandler, { passive: true });
+
       // Check periodically to ensure sidebar stays fixed
       this.fixedCheckInterval = setInterval(() => {
         this.enforceSidebarBehavior();
       }, 1000); // Check more frequently
-      
+
       // Store for cleanup if needed
       this.scrollHandler = scrollHandler;
     }
   }
-  
-  enforceSidebarBehavior() {
-    const sidebarContainer = document.getElementById('sidebar-container');
-    if (!sidebarContainer) return;
-    
-    // Get the sidebar, either from the container or from the body
-    let sidebar = document.querySelector('.sidebar');
-    if (!sidebar) return;
-    
-    if (!this.isMobile) {
 
-      if (document.body.contains(sidebar) && sidebar.parentElement !== document.body) {
+  enforceSidebarBehavior() {
+    const sidebarContainer = document.getElementById("sidebar-container");
+    if (!sidebarContainer) return;
+
+    // Get the sidebar, either from the container or from the body
+    let sidebar = document.querySelector(".sidebar");
+    if (!sidebar) return;
+
+    if (!this.isMobile) {
+      if (
+        document.body.contains(sidebar) &&
+        sidebar.parentElement !== document.body
+      ) {
         sidebar.remove();
       }
-      
-      if (!document.querySelector('body > .sidebar')) {
-    
-        const bodySidebar = document.createElement('aside');
-        bodySidebar.className = 'sidebar fixed-sidebar';
+
+      if (!document.querySelector("body > .sidebar")) {
+        const bodySidebar = document.createElement("aside");
+        bodySidebar.className = "sidebar fixed-sidebar";
         bodySidebar.innerHTML = sidebar.innerHTML;
-        
-  
+
         document.body.appendChild(bodySidebar);
         sidebar = bodySidebar;
       } else {
-        sidebar = document.querySelector('body > .sidebar');
+        sidebar = document.querySelector("body > .sidebar");
       }
-      
+
       // Apply critical styles with direct property assignment
       Object.assign(sidebar.style, {
-        position: 'fixed',
-        top: '0',
-        left: '0',
-        bottom: '0',
-        height: '100%',
-        maxHeight: '100vh',
-        overflow: 'hidden',
-        overflowY: 'hidden',
-        overflowX: 'hidden',
-        zIndex: '1001',
-        transform: 'translateZ(0)'
+        position: "fixed",
+        top: "0",
+        left: "0",
+        bottom: "0",
+        height: "100%",
+        maxHeight: "100vh",
+        overflow: "hidden",
+        overflowY: "hidden",
+        overflowX: "hidden",
+        zIndex: "1001",
+        transform: "translateZ(0)",
       });
-      
-      const sidebarContent = sidebar.querySelector('.sidebar-content');
+
+      const sidebarContent = sidebar.querySelector(".sidebar-content");
       if (sidebarContent) {
         Object.assign(sidebarContent.style, {
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          maxHeight: 'calc(100vh - 290px)',
-          flex: '1',
-          minHeight: '0'
+          overflowY: "auto",
+          overflowX: "hidden",
+          maxHeight: "calc(100vh - 290px)",
+          flex: "1",
+          minHeight: "0",
         });
       }
-      
-      // Properly configure main content
-      const mainContent = document.querySelector('.main-content');
+
+      const mainContent = document.querySelector(".main-content");
       if (mainContent) {
         Object.assign(mainContent.style, {
-          marginLeft: '290px',
-          width: 'calc(100% - 290px)',
-          overflowY: 'auto',
-          height: 'auto',
-          minHeight: '100vh'
+          marginLeft: "290px",
+          width: "calc(100% - 290px)",
+          overflowY: "auto",
+          height: "auto",
+          minHeight: "100vh",
         });
       }
-      
-      const appContainer = document.querySelector('.app-container');
+
+      const appContainer = document.querySelector(".app-container");
       if (appContainer) {
         Object.assign(appContainer.style, {
-          overflow: 'visible',
-          height: 'auto'
+          overflow: "visible",
+          height: "auto",
         });
       }
-      
-      // Re-apply user info and listeners
+
       this.displayUserInfo();
-      
-      // Make sure disconnect button works
-      const disconnectBtn = sidebar.querySelector('#disconnect-btn');
+      const disconnectBtn = sidebar.querySelector("#disconnect-btn");
       if (disconnectBtn) {
-        disconnectBtn.addEventListener('click', this.disconnectUser);
+        disconnectBtn.addEventListener("click", async () => {
+          await this.disconnectUser();
+        });
       }
     }
   }
-  
+
   async initialize() {
     this.updateNavigation();
 
@@ -182,154 +167,199 @@ export default class Sidebar {
       });
     }
   }
-  
-  // Update navigation based on viewport
+
   updateNavigation() {
-    const sidebarContainer = document.getElementById('sidebar-container');
+    const sidebarContainer = document.getElementById("sidebar-container");
     if (!sidebarContainer) return;
-    
-    const existingSidebar = document.querySelector('.sidebar');
+
+    const existingSidebar = document.querySelector(".sidebar");
     if (existingSidebar) {
       existingSidebar.remove();
     }
-    
+
     sidebarContainer.innerHTML = Sidebar.render(this.activePage);
-    
+
     if (this.isMobile) {
-      const appContainer = sidebarContainer.closest('.app-container');
-      const sidebar = sidebarContainer.querySelector('.sidebar');
-      
+      const appContainer = sidebarContainer.closest(".app-container");
+      const sidebar = sidebarContainer.querySelector(".sidebar");
+
       if (sidebar) {
-        sidebar.innerHTML = '';
-        
+        sidebar.innerHTML = "";
+
         // Create mobile navigation
-        const mobileNav = document.createElement('div');
-        mobileNav.className = 'mobile-nav';
-        
+        const mobileNav = document.createElement("div");
+        mobileNav.className = "mobile-nav";
+
         // Navigation items with circular icons
         const navItems = [
-          { id: 'home', initial: 'H', title: 'Home', path: '../Home/Home.html', color: '#3b82f6' },
-          { id: 'publish', initial: 'P', title: 'Publish', path: '../Publish/Publish.html', color: '#f59e0b' },
-          { id: 'my-animals', initial: 'M', title: 'My Animals', path: '../User_Animals/User_Animals.html', color: '#10b981' },
-          { id: 'messages', initial: 'M', title: 'Messages', path: '../Messages/Messages.html', color: '#ef4444' },
-          { id: 'newsletter', initial: 'N', title: 'Newsletter', path: '../Newsletter/Newsletter.html', color: '#6366f1' },
-          { id: 'popular', initial: 'P', title: 'Popular', path: '../Popular/Popular.html', color: '#8b5cf6' }
+          {
+            id: "home",
+            initial: "H",
+            title: "Home",
+            path: "../Home/Home.html",
+            color: "#3b82f6",
+          },
+          {
+            id: "publish",
+            initial: "P",
+            title: "Publish",
+            path: "../Publish/Publish.html",
+            color: "#f59e0b",
+          },
+          {
+            id: "my-animals",
+            initial: "M",
+            title: "My Animals",
+            path: "../User_Animals/User_Animals.html",
+            color: "#10b981",
+          },
+          {
+            id: "messages",
+            initial: "M",
+            title: "Messages",
+            path: "../Messages/Messages.html",
+            color: "#ef4444",
+          },
+          {
+            id: "newsletter",
+            initial: "N",
+            title: "Newsletter",
+            path: "../Newsletter/Newsletter.html",
+            color: "#6366f1",
+          },
+          {
+            id: "popular",
+            initial: "P",
+            title: "Popular",
+            path: "../Popular/Popular.html",
+            color: "#8b5cf6",
+          },
         ];
-        
-        navItems.forEach(item => {
-          const navItem = document.createElement('a');
+
+        navItems.forEach((item) => {
+          const navItem = document.createElement("a");
           navItem.href = item.path;
-          navItem.className = `mobile-nav-item${item.id === this.activePage ? ' active' : ''}`;
-          navItem.setAttribute('aria-label', item.title);
-          
+          navItem.className = `mobile-nav-item${
+            item.id === this.activePage ? " active" : ""
+          }`;
+          navItem.setAttribute("aria-label", item.title);
+
           // Circular icon with initial
-          const circle = document.createElement('div');
-          circle.className = 'profile-circle';
+          const circle = document.createElement("div");
+          circle.className = "profile-circle";
           circle.style.backgroundColor = item.color;
           circle.textContent = item.initial;
-          
+
           // Add badge for messages if needed
-          if (item.id === 'messages' && this.unreadCount > 0) {
-            const badge = document.createElement('span');
-            badge.className = 'mobile-badge';
-            badge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
+          if (item.id === "messages" && this.unreadCount > 0) {
+            const badge = document.createElement("span");
+            badge.className = "mobile-badge";
+            badge.textContent =
+              this.unreadCount > 99 ? "99+" : this.unreadCount;
             circle.appendChild(badge);
           }
-          
+
           navItem.appendChild(circle);
-          
+
           // Label below the icon
-          const label = document.createElement('span');
+          const label = document.createElement("span");
           label.textContent = item.title;
-          label.style.fontSize = '0.7rem';
-          label.style.marginTop = '2px';
+          label.style.fontSize = "0.7rem";
+          label.style.marginTop = "2px";
           navItem.appendChild(label);
           mobileNav.appendChild(navItem);
         });
-        
+
         sidebar.appendChild(mobileNav);
-        
+
         // Move the sidebar to the body for mobile
         document.body.appendChild(sidebar);
-        
+
         // Adjust main content for mobile
-        const mainContent = document.querySelector('.main-content');
+        const mainContent = document.querySelector(".main-content");
         if (mainContent) {
-          mainContent.style.margin = '0';
-          mainContent.style.width = '100%';
-          mainContent.style.paddingBottom = '70px';
+          mainContent.style.margin = "0";
+          mainContent.style.width = "100%";
+          mainContent.style.paddingBottom = "70px";
         }
       }
     } else {
-
-      const sidebar = sidebarContainer.querySelector('.sidebar');
+      const sidebar = sidebarContainer.querySelector(".sidebar");
       if (sidebar) {
-
         const bodySidebar = sidebar.cloneNode(true);
-        bodySidebar.classList.add('fixed-sidebar');
-        
+        bodySidebar.classList.add("fixed-sidebar");
+
         document.body.appendChild(bodySidebar);
-      
+
         this.enforceSidebarBehavior();
 
-        sidebarContainer.innerHTML = '';
+        sidebarContainer.innerHTML = "";
       }
     }
   }
-  
+
   async fetchUnreadMessageCount() {
     try {
-      const token = localStorage.getItem('Token');
+      const token = localStorage.getItem("Token");
       if (!token) return;
-      
-      const response = await fetch('http://localhost:3000/messages/unread-count', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+
+      const response = await fetch(
+        "http://localhost:3000/messages/unread-count",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
-      
+      );
+
       if (!response.ok) {
-        throw new Error('Failed to fetch unread message count');
+        throw new Error("Failed to fetch unread message count");
       }
-      
+
       const data = await response.json();
       this.unreadCount = data.count;
-      
+
       // Update the badge in the DOM
       this.updateUnreadBadge();
     } catch (error) {
-      console.error('Error fetching unread message count:', error);
+      console.error("Error fetching unread message count:", error);
     }
   }
-  
+
   updateUnreadBadge() {
-    const badge = document.getElementById('messages-badge');
+    const badge = document.getElementById("messages-badge");
     if (badge) {
       if (this.unreadCount > 0) {
-        badge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
-        badge.style.display = 'flex';
+        badge.textContent = this.unreadCount > 99 ? "99+" : this.unreadCount;
+        badge.style.display = "flex";
       } else {
-        badge.style.display = 'none';
+        badge.style.display = "none";
       }
     }
   }
-  
+
   getRandomColor() {
     const colors = [
-      '#3b82f6', '#ef4444', '#10b981', '#f59e0b', 
-      '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'
+      "#3b82f6",
+      "#ef4444",
+      "#10b981",
+      "#f59e0b",
+      "#8b5cf6",
+      "#ec4899",
+      "#6366f1",
+      "#14b8a6",
     ];
     return colors[Math.floor(Math.random() * colors.length)];
   }
-  
+
   // Display user information in the sidebar
   displayUserInfo() {
-    const userInfoContainer = document.getElementById('user-info');
+    const userInfoContainer = document.getElementById("user-info");
     if (this.user && this.user.firstName && this.user.email) {
       const firstInitial = this.user.firstName.charAt(0).toUpperCase();
-      const fullName = `${this.user.firstName} ${this.user.lastName || ''}`;
+      const fullName = `${this.user.firstName} ${this.user.lastName || ""}`;
       const profileColor = this.getRandomColor();
       userInfoContainer.innerHTML = `
         <div class="user-info-container">
@@ -345,9 +375,12 @@ export default class Sidebar {
             </div>
             <button id="disconnect-btn" class="disconnect-btn" title="Disconnect">D</button>
           </div>
-        </div>
-      `;
-      document.getElementById('disconnect-btn').addEventListener('click', this.disconnectUser);
+        </div>      `;
+      document
+        .getElementById("disconnect-btn")
+        .addEventListener("click", async () => {
+          await this.disconnectUser();
+        });
     } else {
       userInfoContainer.innerHTML = `
         <div class="user-info-container">
@@ -356,48 +389,114 @@ export default class Sidebar {
         </div>
       `;
     }
-  }
-    // Handle user disconnect
-  disconnectUser() {
-    if (window.sidebarInstance && window.sidebarInstance.unreadMessagesInterval) {
+  }  async disconnectUser() {
+    if (
+      window.sidebarInstance &&
+      window.sidebarInstance.unreadMessagesInterval
+    ) {
       clearInterval(window.sidebarInstance.unreadMessagesInterval);
     }
-    unregisterUserSession();
-    userModel.clearUser();
-    localStorage.removeItem('Token');
-    window.location.href = '../Auth/SignIn.html';
+
+    console.log("Starting logout process...");
+    
+    try {
+      // Get token and sessionId before cleaning up
+      const token = localStorage.getItem("Token");
+      const sessionId = localStorage.getItem("sessionId");
+      
+      if (token && sessionId) {
+        // 1. First attempt - synchronous XHR for session unregister
+        try {
+          console.log("Using synchronous XHR to unregister session");
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", "http://localhost:3000/messages/session/unregister", false); // synchronous
+          xhr.setRequestHeader("Content-Type", "application/json");
+          xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+          xhr.setRequestHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+          xhr.send(JSON.stringify({ sessionId: sessionId }));
+          console.log("Session unregister XHR status:", xhr.status);
+        } catch (e) {
+          console.error("Error in synchronous XHR:", e);
+        }
+        
+        // 2. Second attempt - force offline endpoint
+        try {
+          console.log("Explicitly forcing user offline");
+          const response = await fetch("http://localhost:3000/messages/force-offline", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+              "Cache-Control": "no-cache, no-store, must-revalidate"
+            }
+          });
+          console.log("Force offline status:", response.ok ? "success" : "failed");
+          
+          // Wait for backend to process
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (error) {
+          console.error("Error forcing offline status:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Error during logout process:", error);
+    } finally {
+      // Always clear local data, even if requests fail
+      console.log("Cleaning up local data");
+      userModel.clearUser();
+      localStorage.removeItem("Token");
+      localStorage.removeItem("sessionId");
+      
+      console.log("Logout complete, redirecting...");
+      window.location.href = "../Auth/SignIn.html";
+    }
   }
-  
-  // Render sidebar
+
   static render(activePage) {
     return `
       <aside class="sidebar">
         <div class="sidebar-header">
           <h1>Pet Adoption</h1>
-          <button id="home-btn" class="btn ${activePage === 'home' ? 'active' : ''}" 
+          <button id="home-btn" class="btn ${
+            activePage === "home" ? "active" : ""
+          }" 
                   onclick="location.href='../Home/Home.html'">Home</button>
-          <button id="publish-btn" class="btn ${activePage === 'publish' ? 'active' : ''}" 
+          <button id="publish-btn" class="btn ${
+            activePage === "publish" ? "active" : ""
+          }" 
                   onclick="location.href='../Publish/Publish.html'">Publish</button>
-          <button id="my-animals-btn" class="btn ${activePage === 'userAnimals' ? 'active' : ''}" 
+          <button id="my-animals-btn" class="btn ${
+            activePage === "userAnimals" ? "active" : ""
+          }" 
                   onclick="location.href='../User_Animals/User_Animals.html'">My Animals</button>
           <div class="btn-container">
-            <button id="messages-btn" class="btn ${activePage === 'messages' ? 'active' : ''}" 
+            <button id="messages-btn" class="btn ${
+              activePage === "messages" ? "active" : ""
+            }" 
                     onclick="location.href='../Messages/Messages.html'">Messages</button>
             <span id="messages-badge" class="messages-badge">0</span>
           </div>
-          <button id="newsletter-btn" class="btn ${activePage === 'newsletter' ? 'active' : ''}"
+          <button id="newsletter-btn" class="btn ${
+            activePage === "newsletter" ? "active" : ""
+          }"
                   onclick="location.href='../Newsletter/Newsletter.html'">Newsletter</button>
-          <button id="popular-btn" class="btn ${activePage === 'popular' ? 'active' : ''}"
+          <button id="popular-btn" class="btn ${
+            activePage === "popular" ? "active" : ""
+          }"
                   onclick="location.href='../Popular/Popular.html'">Popular</button>
         </div>
         <div class="sidebar-content">
-          ${activePage === 'home' ? `
+          ${
+            activePage === "home"
+              ? `
           <div class="filter-section">
             <h2>Filter by Species</h2>
             <div id="sidebar-species-filters" class="filter-options">
               <div class="loader">Loading species...</div>
             </div>
-          </div>` : ''}
+          </div>`
+              : ""
+          }
         </div>
         <div class="user-section">
           <div id="user-info">

@@ -2,15 +2,19 @@ import userModel from "../models/User.js";
 import { requireAuth } from "../utils/authUtils.js";
 import { showLoading, hideLoading } from "../utils/loadingUtils.js";
 import { createElement, sanitizeInput, getCsrfToken } from "../utils/securityUtils.js";
+import { initializeSession } from '../utils/sessionUtils.js';
 
 const API_URL = "http://localhost:3000";
 const token = localStorage.getItem("Token");
 let user;
 
 // Initialize the page
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
   user = requireAuth();
   if (!user) return;
+
+  // Initialize session for online status tracking
+  await initializeSession();
 
   const feedingContainer = document.getElementById("feeding-schedule-container");
   if (

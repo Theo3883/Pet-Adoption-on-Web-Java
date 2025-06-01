@@ -1,6 +1,7 @@
 import Sidebar from '../SideBar/Sidebar.js';
 import { showAnimalDetailsPopup } from '../AnimalCard/AnimalCard.js';
 import { showLoading, hideLoading } from '../utils/loadingUtils.js';
+import { initializeSession } from '../utils/sessionUtils.js';
 import { 
   getOptimalImageSize, 
   generateSrcSet, 
@@ -21,6 +22,9 @@ window.addEventListener('resize', () => {
 
 async function initialize() {
   addPreconnect('http://localhost:3000');
+  
+  // Initialize session for online status tracking
+  await initializeSession();
   
   // Render sidebar
   document.getElementById('sidebar-container').innerHTML = Sidebar.render('popular');

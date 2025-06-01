@@ -3,6 +3,7 @@ import { showAnimalDetailsPopup } from '../AnimalCard/AnimalCard.js';
 import { requireAuth } from '../utils/authUtils.js';
 import { showLoading, hideLoading } from '../utils/loadingUtils.js';
 import { setupLazyLoading, addPreconnect } from '../utils/performanceUtils.js';
+import { initializeSession } from '../utils/sessionUtils.js';
 import { 
   getOptimalImageSize, 
   generateSrcSet, 
@@ -18,7 +19,6 @@ let filteredAnimals = [];
 let user;
 let isMobile = window.innerWidth < 768;
 
-// Listen for viewport changes
 window.addEventListener('resize', () => {
   const wasMobile = isMobile;
   isMobile = window.innerWidth < 768;
@@ -34,11 +34,12 @@ async function initialize() {
   user = requireAuth();
   if (!user) return;
   
+  await initializeSession();
+  
   const sidebarContainer = document.getElementById('sidebar-container');
   if (sidebarContainer) {
     sidebarContainer.innerHTML = Sidebar.render('home');
     
-    // Use requestAnimationFrame for proper timing
     requestAnimationFrame(() => {
       const sidebar = new Sidebar('home');
       window.sidebarInstance = sidebar;
@@ -51,13 +52,11 @@ async function initialize() {
     });
   }
   
-  // Fix scrolling issues globally
   document.body.style.overflow = '';
   document.body.style.position = '';
   document.documentElement.style.overflow = '';
   document.documentElement.style.position = '';
   
-  // Ensure main content scrolls
   const mainContent = document.querySelector('.main-content');
   if (mainContent) {
     mainContent.style.overflowY = 'auto';
@@ -75,7 +74,6 @@ async function initialize() {
   setTimeout(ensureSidebarFiltersPopulated, 300);
 }
 
-// Setup mobile filter drawer
 function setupMobileFilters() {
   const filterToggle = document.getElementById('filter-toggle');
   const filterDrawer = document.getElementById('filter-drawer');
@@ -113,7 +111,6 @@ async function fetchAnimals() {
   try {
     showLoading('Loading animals...');
     
-    // Clear the static loader
     const container = document.getElementById('animal-cards-container');
     container.innerHTML = '';
     
@@ -129,14 +126,12 @@ async function fetchAnimals() {
     
     animals = await response.json();
     
-    // Cache animals for faster subsequent loads
     try {
       localStorage.setItem('cachedAnimals', JSON.stringify(animals));
     } catch (e) {
       console.warn('Could not cache animals:', e);
     }
     
-    // Extract unique species for filters
     animals.forEach(animal => {
       if (animal.SPECIES && !uniqueSpecies.includes(animal.SPECIES)) {
         uniqueSpecies.push(animal.SPECIES);
@@ -162,7 +157,6 @@ function renderSpeciesFilters() {
   
   renderFilterContainer(document.getElementById('sidebar-species-filters'));
   
-  // general selector as fallback
   if (!document.getElementById('sidebar-species-filters')) {
     const sidebarFilters = document.querySelector('.sidebar .filter-options');
     if (sidebarFilters) {
@@ -179,15 +173,12 @@ function renderFilterContainer(filtersContainer) {
   
   console.log("Rendering filters for container:", filtersContainer.id || "unnamed container");
   
-  // Clear container
   filtersContainer.innerHTML = ''; 
   
-  // Special handling for sidebar filters
   if (filtersContainer.classList.contains('filter-options') && filtersContainer.querySelector('.loader')) {
     filtersContainer.querySelector('.loader').remove();
   }
   
-  // Create checkboxes for each species
   uniqueSpecies.forEach(species => {
     const filterOption = document.createElement('div');
     filterOption.className = 'filter-option';
@@ -195,7 +186,6 @@ function renderFilterContainer(filtersContainer) {
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     
-    // generate a unique ID for each checkbox
     let containerId = filtersContainer.id || 'unknown';
     if (containerId === 'sidebar-species-filters') {
       containerId = 'sidebar';

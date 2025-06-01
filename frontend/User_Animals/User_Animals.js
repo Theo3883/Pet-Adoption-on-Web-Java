@@ -2,6 +2,7 @@ import { requireAuth } from '../utils/authUtils.js';
 import Sidebar from '../SideBar/Sidebar.js';
 import { showLoading, hideLoading } from '../utils/loadingUtils.js';
 import { setupLazyLoading, addPreconnect, addDnsPrefetch } from '../utils/performanceUtils.js';
+import { initializeSession } from '../utils/sessionUtils.js';
 
 const API_URL = 'http://localhost:3000';
 const token = localStorage.getItem('Token');
@@ -14,6 +15,9 @@ async function initialize() {
     
     user = requireAuth();
     if (!user) return; 
+    
+    // Initialize session for online status tracking
+    await initializeSession();
     
     // Render sidebar
     document.getElementById('sidebar-container').innerHTML = Sidebar.render('userAnimals');

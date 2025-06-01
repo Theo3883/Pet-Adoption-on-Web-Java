@@ -320,6 +320,38 @@ public class MessageController {
         }
     }
 
+    @PostMapping("/messages/session/unregister")
+    public ResponseEntity<?> unregisterSession(@RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
+        try {
+            Long userId = extractUserIdFromToken(httpRequest);
+            if (userId == null) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "User authentication required");
+                return ResponseEntity.status(401).body(error);
+            }
+
+            String sessionId = (String) request.get("sessionId");
+            if (sessionId == null) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Session ID is required");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            realTimeMessageService.unregisterUserSessionAsync(sessionId);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Session unregistered successfully");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Error unregistering session", e);
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Internal Server Error");
+            return ResponseEntity.status(500).body(error);
+        }
+    }
+
     @PostMapping("/messages/typing")
     public ResponseEntity<?> handleTyping(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
         try {
@@ -351,9 +383,7 @@ public class MessageController {
             error.put("error", "Internal Server Error");
             return ResponseEntity.status(500).body(error);
         }
-    }
-
-    @GetMapping("/messages/online-status/{userId}")
+    }    @GetMapping("/messages/online-status/{userId}")
     public ResponseEntity<?> getOnlineStatus(@PathVariable Long userId, HttpServletRequest httpRequest) {
         try {
             Long requesterId = extractUserIdFromToken(httpRequest);
@@ -363,12 +393,20 @@ public class MessageController {
                 return ResponseEntity.status(401).body(error);
             }
 
+            if (userId == null) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "User ID is required");
+                return ResponseEntity.badRequest().body(error);
+            }
+            realTimeMessageService.cleanupInactiveSessionsAsync().get();
+            
             CompletableFuture<Boolean> onlineFuture = realTimeMessageService.isUserOnlineAsync(userId);
             Boolean isOnline = onlineFuture.get();
 
             Map<String, Object> response = new HashMap<>();
             response.put("userId", userId);
             response.put("isOnline", isOnline);
+            log.debug("User {} online status requested by {}: {}", userId, requesterId, isOnline);
             return ResponseEntity.ok(response);
 
         } catch (ExecutionException | InterruptedException e) {
@@ -390,14 +428,43 @@ public class MessageController {
             }
 
             CompletableFuture<Integer> countFuture = realTimeMessageService.getOnlineUsersCountAsync();
-            Integer count = countFuture.get();
-
-            Map<String, Object> response = new HashMap<>();
+            Integer count = countFuture.get();            Map<String, Object> response = new HashMap<>();
             response.put("onlineCount", count);
             return ResponseEntity.ok(response);
 
         } catch (ExecutionException | InterruptedException e) {
             log.error("Error getting online users count", e);
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Internal Server Error");
+            return ResponseEntity.status(500).body(error);
+        }
+    }
+
+    @PostMapping("/messages/force-offline")
+    public ResponseEntity<?> forceUserOffline(HttpServletRequest httpRequest) {
+        try {
+            Long userId = extractUserIdFromToken(httpRequest);
+            if (userId == null) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "User authentication required");
+                return ResponseEntity.status(401).body(error);
+            }
+
+            log.info("Force offline request received for user: {}", userId);
+            
+            // Force the user to be offline
+            realTimeMessageService.notifyUserOnlineStatusAsync(userId, false).join();
+            
+            // Clean up any lingering sessions
+            realTimeMessageService.cleanupInactiveSessionsAsync().join();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "User set to offline");
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Error setting user to offline", e);
             Map<String, String> error = new HashMap<>();
             error.put("error", "Internal Server Error");
             return ResponseEntity.status(500).body(error);

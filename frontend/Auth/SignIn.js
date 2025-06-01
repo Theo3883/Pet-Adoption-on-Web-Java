@@ -2,11 +2,11 @@ import { decodeToken } from "./Auth.js";
 import user from "../models/User.js";
 import { redirectIfLoggedIn } from '../utils/authUtils.js';
 import { sanitizeInput, validateEmail, getCsrfToken } from '../utils/securityUtils.js';
+import { registerUserSession } from '../utils/sessionUtils.js';
 
 const API_URL = "http://localhost:3000";
 
 document.addEventListener('DOMContentLoaded', function() {
-  // If user is already logged in, redirect to home page
   if (redirectIfLoggedIn()) return;
   
   setupImageSlider();
@@ -17,7 +17,6 @@ document
   .addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    // Sanitize inputs before sending to server
     const email = sanitizeInput(document.getElementById("email").value.trim());
     const password = document.getElementById("password").value; 
 
@@ -39,13 +38,9 @@ document
       if (response.ok) {
         const data = await response.json();
         
-        // Store the token in localStorage
         localStorage.setItem("Token", data.token);
-
-        // Decode the token and save user details
         const decoded = jwt_decode(data.token);
 
-        // Save user information to the user model
         user.setUser({
           id: decoded.id,
           email: decoded.email,
@@ -54,8 +49,8 @@ document
           phone: decoded.phone,
           createdAt: decoded.createdAt 
         });
+        await registerUserSession(data.token);
 
-        // Redirect to the home page
         window.location.href = "../Home/Home.html";
       } else {
         const error = await response.json().catch(() => ({ message: "Authentication failed" }));
@@ -101,7 +96,6 @@ function setupImageSlider() {
     imageSlider.appendChild(img);
   });
 
-  // Setup image rotation
   const images = document.querySelectorAll('.photo-section img');
   let currentIndex = 0;
 

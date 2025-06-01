@@ -2,6 +2,7 @@ import userModel from '../models/User.js';
 import { requireAuth } from '../utils/authUtils.js';
 import Sidebar from '../SideBar/Sidebar.js';
 import { showLoading, hideLoading } from '../utils/loadingUtils.js';
+import { initializeSession } from '../utils/sessionUtils.js';
 
 const API_URL = 'http://localhost:3000';
 const token = localStorage.getItem('Token');
@@ -10,9 +11,9 @@ let currentConversationUser = null;
 let conversations = [];
 let currentMessages = [];
 let pollingInterval;
+let currentContactOnlineStatus = false;
 
 async function initialize() {
-  // loading spinner
   const linkElement = document.createElement("link");
   linkElement.rel = "stylesheet";
   linkElement.href = "../utils/loadingUtils.css";
@@ -21,20 +22,20 @@ async function initialize() {
   user = requireAuth();
   if (!user) return;
   
-  // Render sidebar
+  // Initialize session for online status tracking
+  await initializeSession();
+  
   document.getElementById('sidebar-container').innerHTML = Sidebar.render('messages');
   new Sidebar('messages');
   
   document.getElementById('send-message-form').addEventListener('submit', handleSendMessage);
   
   initializeMobileView();
-  
   setupMobileNavigation();
-  
-  // Set up mutation observer to detect when messages are added and scroll to bottom
   setupScrollObserver();
   
-  await loadConversations(true);  // Set up polling for new messages (every 2 seconds for faster updates)
+  await loadConversations(true);
+  
   pollingInterval = setInterval(async () => {
     if (currentConversationUser) {
       await loadConversation(currentConversationUser.userId, false);
@@ -49,13 +50,11 @@ async function initialize() {
   });
 }
 
-// Initialize mobile view state
 function initializeMobileView() {
   const isMobile = window.innerWidth <= 768;
   const conversationsList = document.querySelector('.conversations-list');
   const messagesContainer = document.querySelector('.messages-container');
   
-  // Define preventScroll function outside the if-block so it's accessible everywhere
   const preventScroll = (e) => {
     if (!e.target.closest('.messages') && !e.target.closest('#message-input')) {
       e.preventDefault();
@@ -63,28 +62,22 @@ function initializeMobileView() {
   };
   
   if (isMobile) {
-    // Start with conversation list visible
     conversationsList.classList.add('active');
     messagesContainer.classList.remove('active');
     
-    // Reset any transform styling to ensure proper display
     conversationsList.style.transform = 'translateX(0)';
     messagesContainer.style.transform = 'translateX(100%)';
     
-    // Fix scrolling - only message box should scroll
     document.body.style.overflow = 'hidden';
     document.querySelector('.main-content').style.overflow = 'hidden';
     
-    // Make sure the messages div is scrollable
     const messagesDiv = document.querySelector('.messages');
     if (messagesDiv) {
       messagesDiv.style.overflowY = 'auto';
     }
     
-    // Prevent other elements from scrolling
     document.addEventListener('touchmove', preventScroll, { passive: false });
   } else {
-    // On desktop, both should be visible
     messagesContainer.classList.add('active');
     document.body.style.overflow = '';
     document.removeEventListener('touchmove', preventScroll);
@@ -113,7 +106,6 @@ async function loadConversations(showLoader = true) {
     displayConversations(conversations);
   } catch (error) {
     console.error('Error loading conversations:', error);
-
     if (showLoader) {
       document.getElementById('conversation-list').innerHTML = 
         '<div class="error-message">Failed to load conversations</div>';
@@ -147,13 +139,11 @@ function displayConversations(conversations) {
     </div>
   `).join('');
   
-  // Add event listeners to conversation items
   document.querySelectorAll('.conversation-item').forEach(item => {
     item.addEventListener('click', () => {
       const userId = parseInt(item.dataset.userId);
       loadConversation(userId);
       
-      // Update sidebar unread count after opening a conversation
       if (window.sidebarInstance) {
         setTimeout(() => {
           window.sidebarInstance.fetchUnreadMessageCount();
@@ -163,23 +153,19 @@ function displayConversations(conversations) {
   });
 }
 
-// Add this helper function to truncate long messages in the preview
 function truncateMessage(message) {
   return message.length > 30 ? message.substring(0, 27) + '...' : message;
 }
 
-// Add mobile navigation setup
 function setupMobileNavigation() {
   const backButton = document.querySelector('.back-button');
   const conversationsList = document.querySelector('.conversations-list');
   const messagesContainer = document.querySelector('.messages-container');
   
-  // Make conversations list visible by default on mobile
   if (window.innerWidth <= 768) {
     conversationsList.classList.add('active');
     messagesContainer.classList.remove('active');
     
-    // Set transforms explicitly
     conversationsList.style.transform = 'translateX(0)';
     messagesContainer.style.transform = 'translateX(100%)';
   }
@@ -189,11 +175,9 @@ function setupMobileNavigation() {
     conversationsList.classList.add('active');
     messagesContainer.classList.remove('active');
     
-    // Set transforms explicitly
     conversationsList.style.transform = 'translateX(0)';
     messagesContainer.style.transform = 'translateX(100%)';
     
-    // Reset conversation state
     currentConversationUser = null;
   });
   
@@ -203,19 +187,16 @@ function setupMobileNavigation() {
       conversationsList.classList.remove('active');
       messagesContainer.classList.add('active');
       
-      // Set transforms explicitly
       conversationsList.style.transform = 'translateX(-100%)';
       messagesContainer.style.transform = 'translateX(0)';
     }
   });
   
-  // Adjust UI when keyboard appears on mobile
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', () => {
       if (window.innerWidth <= 768) {
         const keyboardHeight = window.innerHeight - window.visualViewport.height;
         
-        // If keyboard is visible
         if (keyboardHeight > 100) {
           document.querySelector('.message-input-area').style.bottom = '0px';
         } else {
@@ -232,7 +213,6 @@ async function loadConversation(otherUserId, showLoader = true) {
       showLoading('Loading messages...');
     }
     
-    // Mark messages as read when opening conversation
     await fetch(`${API_URL}/messages/read`, {
       method: 'POST',
       headers: {
@@ -242,7 +222,6 @@ async function loadConversation(otherUserId, showLoader = true) {
       body: JSON.stringify({ otherUserId })
     });
     
-    // Fetch conversation
     const response = await fetch(`${API_URL}/messages/conversation`, {
       method: 'POST',
       headers: {
@@ -258,7 +237,6 @@ async function loadConversation(otherUserId, showLoader = true) {
     
     currentMessages = await response.json();
     
-    // Find user details from the messages
     if (currentMessages.length > 0) {
       const message = currentMessages[0];
       if (message.SENDERID === otherUserId) {
@@ -273,19 +251,21 @@ async function loadConversation(otherUserId, showLoader = true) {
         };
       }
     }
+    
     displayMessages(currentMessages, otherUserId);
-    // Update conversation UI
+    
     const conversationTitleElem = document.getElementById('conversation-title');
     if (currentConversationUser) {
-      conversationTitleElem.innerHTML = `${currentConversationUser.name} <span id="contact-online-status"></span>`;
-      fetchContactOnlineStatus(currentConversationUser.userId);      // Poll contact's online status every 15 seconds while this conversation is open
+      conversationTitleElem.innerHTML = `${currentConversationUser.name} <span id="contact-online-status" class="status-container"><span class="offline-dot"></span> <span class="offline-text">Offline</span></span>`;
+        currentContactOnlineStatus = false;
+      fetchContactOnlineStatus(currentConversationUser.userId);
+      
       if (window.contactStatusInterval) clearInterval(window.contactStatusInterval);
       window.contactStatusInterval = setInterval(() => {
         fetchContactOnlineStatus(currentConversationUser.userId);
-      }, 15000);
+      }, 5000); // Check every 5 seconds instead of 15
     } else {
       conversationTitleElem.textContent = 'Messages';
-      updateContactOnlineStatus(false);
       if (window.contactStatusInterval) clearInterval(window.contactStatusInterval);
     }
     
@@ -302,15 +282,11 @@ async function loadConversation(otherUserId, showLoader = true) {
       messagesContainer.classList.add('active');
     }
     
-    // Mark the selected conversation in the list
     document.querySelectorAll('.conversation-item').forEach(item => {
       item.classList.toggle('selected', parseInt(item.dataset.userId) === otherUserId);
     });
     
-    // Scroll to bottom of messages to ensure the last message is visible
     scrollToBottom();
-    
-    // Add an extra scroll after a delay to handle any layout shifts
     setTimeout(scrollToBottom, 500);
     
   } catch (error) {
@@ -326,7 +302,6 @@ async function loadConversation(otherUserId, showLoader = true) {
   }
 }
 
-// Update displayMessages function to ensure message visibility
 function displayMessages(messages, otherUserId) {
   const container = document.getElementById('messages');
   
@@ -356,23 +331,18 @@ function displayMessages(messages, otherUserId) {
     `;
   }).join('');
   
-  // Ensure proper scrolling to the bottom with a small delay
   setTimeout(() => {
     scrollToBottom();
   }, 100);
 }
 
-// Set up an observer to detect content changes and scroll to bottom
 function setupScrollObserver() {
   const messagesContainer = document.getElementById('messages');
   if (messagesContainer) {
-    // Create a MutationObserver to watch for changes in the messages container
     const observer = new MutationObserver((mutations) => {
-      // If content changed (messages added/removed), scroll to bottom
       scrollToBottom();
     });
     
-    // Start observing the container for changes in its children
     observer.observe(messagesContainer, { 
       childList: true,
       subtree: true
@@ -385,7 +355,7 @@ function scrollToBottom() {
   const messagesDiv = document.getElementById('messages');
   if (messagesDiv) {
     const isMobile = window.innerWidth <= 768;
-    const extraOffset = isMobile ? 2000 : 1000; // Extra padding on mobile
+    const extraOffset = isMobile ? 2000 : 1000;
     messagesDiv.scrollTop = messagesDiv.scrollHeight + extraOffset;
     
     setTimeout(() => {
@@ -401,7 +371,6 @@ function formatTimeOnly(timestamp) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-// Handle sending messages
 async function handleSendMessage(event) {
   event.preventDefault();
   
@@ -421,7 +390,6 @@ async function handleSendMessage(event) {
     tempMessage.id = tempId;
     tempMessage.className = 'message sent';
     
-    // Format current time
     const now = new Date();
     const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
@@ -497,7 +465,6 @@ export function setupContactButton(ownerId, ownerName) {
   }
 }
 
-// Helper functions
 function getInitials(name) {
   return name
     .split(' ')
@@ -514,21 +481,16 @@ function formatTimestamp(timestamp) {
   const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
   
   if (diffDays === 0) {
-    // Today - show time
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   } else if (diffDays === 1) {
-    // Yesterday
     return 'Yesterday';
   } else if (diffDays < 7) {
-    // This week - show day name
     return date.toLocaleDateString([], { weekday: 'short' });
   } else {
-    // Older - show date
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   }
 }
 
-// Check URL for direct conversation opening
 function checkUrlForDirectMessage() {
   const urlParams = new URLSearchParams(window.location.search);
   const userId = urlParams.get('userId');
@@ -553,32 +515,58 @@ async function fetchContactOnlineStatus(userId) {
   try {
     const token = localStorage.getItem('Token');
     if (!token || !userId) return;
-    const response = await fetch(`http://localhost:3000/messages/online-status/${userId}`, {
+    
+    // Add a timestamp to prevent caching
+    const timestamp = new Date().getTime();
+    const response = await fetch(`http://localhost:3000/messages/online-status/${userId}?t=${timestamp}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
       }
     });
-    if (!response.ok) throw new Error('Failed to fetch online status');
+    
+    if (!response.ok) {
+      console.debug(`Error fetching online status (${response.status}): ${response.statusText}`);
+      return;
+    }
+    
     const data = await response.json();
+    console.debug(`User ${userId} online status: ${data.isOnline}`);
     updateContactOnlineStatus(data.isOnline === true);
   } catch (e) {
-    updateContactOnlineStatus(false);
+    console.debug('Could not fetch online status:', e.message);
   }
 }
 
 function updateContactOnlineStatus(isOnline) {
   const statusElem = document.getElementById('contact-online-status');
   if (!statusElem) return;
-  if (isOnline) {
-    statusElem.innerHTML = '<span class="online-dot"></span> <span class="online-text">Online</span>';
-  } else {
-    statusElem.innerHTML = '<span class="offline-dot"></span> <span class="offline-text">Offline</span>';
-  }
+  
+  if (currentContactOnlineStatus === isOnline) return;
+  
+  currentContactOnlineStatus = isOnline;
+  
+  const dotClass = isOnline ? 'online-dot' : 'offline-dot';
+  const textClass = isOnline ? 'online-text' : 'offline-text';
+  const statusText = isOnline ? 'Online' : 'Offline';
+  
+  statusElem.innerHTML = `<span class="${dotClass}"></span> <span class="${textClass}">${statusText}</span>`;
 }
 
-// On page unload, clear the contact status polling interval
 window.addEventListener('beforeunload', () => {
   if (window.contactStatusInterval) clearInterval(window.contactStatusInterval);
+  
+  const token = localStorage.getItem('Token');
+  const sessionId = localStorage.getItem('sessionId');
+  
+  if (token && sessionId && navigator.sendBeacon) {
+    const data = new Blob([JSON.stringify({ sessionId: sessionId })], 
+      { type: 'application/json' });
+    
+    navigator.sendBeacon('http://localhost:3000/messages/session/unregister', data);
+    console.log('Sent session unregister beacon on page unload');
+  }
 });

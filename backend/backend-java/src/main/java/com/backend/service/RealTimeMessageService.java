@@ -50,7 +50,8 @@ public class RealTimeMessageService {
 
                         if (userSessions.isEmpty()) {
                             activeUserSessions.remove(userId);
-                            notifyUserOnlineStatusAsync(userId, false);
+                            log.info("User {} is now offline - last session removed", userId);
+                            notifyUserOnlineStatusAsync(userId, false).join();
                         }
                     }
                     log.info("Session {} unregistered successfully", sessionId);
@@ -86,12 +87,31 @@ public class RealTimeMessageService {
             }
         });
     }
-
+    
     @Async("generalThreadPoolTaskExecutor")
     public CompletableFuture<Void> notifyUserOnlineStatusAsync(Long userId, boolean isOnline) {
         return CompletableFuture.runAsync(() -> {
             try {
                 log.info("User {} is now {}", userId, isOnline ? "online" : "offline");
+                
+                if (!isOnline) {
+                    activeUserSessions.remove(userId);
+                    CopyOnWriteArrayList<String> userSessions = new CopyOnWriteArrayList<>();
+                    sessionUserMap.entrySet().removeIf(entry -> {
+                        if (entry.getValue().equals(userId)) {
+                            userSessions.add(entry.getKey());
+                            return true;
+                        }
+                        return false;
+                    });
+                    
+                    log.debug("Removed {} lingering sessions for user {}", userSessions.size(), userId);
+                } else if (isOnline) {
+                    CopyOnWriteArrayList<String> sessions = activeUserSessions.get(userId);
+                    if (sessions != null && !sessions.isEmpty()) {
+                        log.debug("User {} has {} active sessions", userId, sessions.size());
+                    }
+                }
             } catch (Exception e) {
                 log.error("Error notifying user status change for user {}", userId, e);
             }
@@ -140,12 +160,12 @@ public class RealTimeMessageService {
         return CompletableFuture.supplyAsync(() -> {
             return activeUserSessions.size();
         });
-    }
-
-    public CompletableFuture<Boolean> isUserOnlineAsync(Long userId) {
+    }    public CompletableFuture<Boolean> isUserOnlineAsync(Long userId) {
         return CompletableFuture.supplyAsync(() -> {
             CopyOnWriteArrayList<String> userSessions = activeUserSessions.get(userId);
-            return userSessions != null && !userSessions.isEmpty();
+            boolean isOnline = userSessions != null && !userSessions.isEmpty();
+            log.debug("Checking if user {} is online: {}", userId, isOnline);
+            return isOnline;
         });
     }
 
