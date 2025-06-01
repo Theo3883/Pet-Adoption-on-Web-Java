@@ -1,6 +1,30 @@
 import userModel from '../models/User.js';
 import { requireAuth } from '../utils/authUtils.js';
 
+async function unregisterUserSession() {
+  try {
+    const token = localStorage.getItem('Token');
+    const sessionId = localStorage.getItem('sessionId');
+    
+    if (!token || !sessionId) return;
+
+    await fetch('http://localhost:3000/messages/unregister-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ sessionId: sessionId })
+    });
+    
+    // Clean up session storage
+    localStorage.removeItem('sessionId');
+    console.log('User session unregistered');
+  } catch (error) {
+    console.error('Error unregistering user session:', error);
+  }
+}
+
 export default class Sidebar {
   constructor(activePage) {
     this.activePage = activePage; 
@@ -143,7 +167,9 @@ export default class Sidebar {
   }
   
   async initialize() {
-    this.updateNavigation();    if (this.user) {
+    this.updateNavigation();
+
+    if (this.user) {
       await this.fetchUnreadMessageCount();
       this.unreadMessagesInterval = setInterval(() => {
         this.fetchUnreadMessageCount();
@@ -301,12 +327,10 @@ export default class Sidebar {
   // Display user information in the sidebar
   displayUserInfo() {
     const userInfoContainer = document.getElementById('user-info');
-    
     if (this.user && this.user.firstName && this.user.email) {
       const firstInitial = this.user.firstName.charAt(0).toUpperCase();
       const fullName = `${this.user.firstName} ${this.user.lastName || ''}`;
       const profileColor = this.getRandomColor();
-      
       userInfoContainer.innerHTML = `
         <div class="user-info-container">
           <div class="user-profile">
@@ -323,8 +347,6 @@ export default class Sidebar {
           </div>
         </div>
       `;
-      
-      // disconnect 
       document.getElementById('disconnect-btn').addEventListener('click', this.disconnectUser);
     } else {
       userInfoContainer.innerHTML = `
@@ -335,14 +357,12 @@ export default class Sidebar {
       `;
     }
   }
-  
-  // Handle user disconnect
+    // Handle user disconnect
   disconnectUser() {
-    // Clear intervals before disconnecting
     if (window.sidebarInstance && window.sidebarInstance.unreadMessagesInterval) {
       clearInterval(window.sidebarInstance.unreadMessagesInterval);
     }
-    
+    unregisterUserSession();
     userModel.clearUser();
     localStorage.removeItem('Token');
     window.location.href = '../Auth/SignIn.html';

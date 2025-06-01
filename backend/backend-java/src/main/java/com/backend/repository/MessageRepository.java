@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -40,9 +41,8 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
            "WHERE m.receiver.userId = :userId " +
            "GROUP BY m.sender " +
            "ORDER BY MAX(m.timestamp) DESC")
-    List<Object[]> findConversationsAsReceiver(@Param("userId") Long userId);
-    
-    @Modifying
+    List<Object[]> findConversationsAsReceiver(@Param("userId") Long userId);    @Modifying
+    @Transactional
     @Query("UPDATE Message m SET m.isRead = true " +
            "WHERE m.receiver.userId = :userId AND m.sender.userId = :otherUserId AND m.isRead = false")
     void markAsRead(@Param("userId") Long userId, @Param("otherUserId") Long otherUserId);

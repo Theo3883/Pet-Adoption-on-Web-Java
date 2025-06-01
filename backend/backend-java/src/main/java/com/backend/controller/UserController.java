@@ -4,6 +4,7 @@ import com.backend.dto.UserLoginRequest;
 import com.backend.dto.UserResponse;
 import com.backend.dto.UserSignupRequest;
 import com.backend.service.JwtService;
+import com.backend.service.RealTimeMessageService;
 import com.backend.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ public class UserController {
     
     private final UserService userService;
     private final JwtService jwtService;
+    private final RealTimeMessageService realTimeMessageService;
     
     @PostMapping("/users/signup")
     public ResponseEntity<?> signUp(@RequestBody UserSignupRequest request) {
@@ -155,4 +157,18 @@ public class UserController {
             }
         }
     }
-} 
+    
+    @GetMapping("/users/{userId}/online-status")
+    public ResponseEntity<?> getUserOnlineStatus(@PathVariable Long userId) {
+        try {
+            boolean isOnline = realTimeMessageService.isUserOnlineAsync(userId).get();
+            Map<String, Object> response = new HashMap<>();
+            response.put("online", isOnline);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Could not determine online status");
+            return ResponseEntity.status(500).body(error);
+        }
+    }
+}

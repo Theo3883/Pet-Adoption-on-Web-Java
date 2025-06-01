@@ -1,4 +1,3 @@
-import { decodeToken } from "./Auth.js"; 
 import user from "../models/User.js";
 import { redirectIfLoggedIn } from '../utils/authUtils.js';
 import { sanitizeInput, validateEmail, getCsrfToken } from '../utils/securityUtils.js';
@@ -6,7 +5,6 @@ import { sanitizeInput, validateEmail, getCsrfToken } from '../utils/securityUti
 const API_URL = "http://localhost:3000";
 
 document.addEventListener('DOMContentLoaded', function() {
-  // If user is already logged in, redirect to home page
   if (redirectIfLoggedIn()) return;
   
   setupImageSlider();
@@ -17,7 +15,6 @@ document
   .addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    // Sanitize inputs before sending to server
     const email = sanitizeInput(document.getElementById("email").value.trim());
     const password = document.getElementById("password").value; 
 
@@ -39,13 +36,9 @@ document
       if (response.ok) {
         const data = await response.json();
         
-        // Store the token in localStorage
         localStorage.setItem("Token", data.token);
 
-        // Decode the token and save user details
         const decoded = jwt_decode(data.token);
-
-        // Save user information to the user model
         user.setUser({
           id: decoded.id,
           email: decoded.email,
@@ -55,7 +48,7 @@ document
           createdAt: decoded.createdAt 
         });
 
-        // Redirect to the home page
+        await registerUserSession(decoded.id, data.token);
         window.location.href = "../Home/Home.html";
       } else {
         const error = await response.json().catch(() => ({ message: "Authentication failed" }));
@@ -63,9 +56,38 @@ document
       }
     } catch (err) {
       console.error("Error during sign-in:", err);
-      showError("An error occurred. Please try again.");
-    }
+      showError("An error occurred. Please try again.");    }
   });
+
+async function registerUserSession(userId, token) {
+  try {
+    const sessionId = generateSessionId();
+    const response = await fetch(`${API_URL}/messages/session/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ 
+        userId: userId,
+        sessionId: sessionId 
+      }),
+    });
+
+    if (response.ok) {
+      localStorage.setItem("sessionId", sessionId);
+      console.log("User registered as online");
+    } else {
+      console.warn("Failed to register user session");
+    }
+  } catch (error) {
+    console.error("Error registering user session:", error);
+  }
+}
+
+function generateSessionId() {
+  return 'session_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+}
 
 function showError(message) {
   const errorElement = document.getElementById("error-message") || createErrorElement();
@@ -101,7 +123,6 @@ function setupImageSlider() {
     imageSlider.appendChild(img);
   });
 
-  // Setup image rotation
   const images = document.querySelectorAll('.photo-section img');
   let currentIndex = 0;
 

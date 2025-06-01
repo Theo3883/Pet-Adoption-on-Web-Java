@@ -285,6 +285,34 @@
   margin: auto;
 }
 
+/* Online status indicator for contact */
+.online-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #22c55e;
+  vertical-align: middle;
+}
+.offline-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #a3a3a3;
+  vertical-align: middle;
+}
+.online-text {
+  color: #22c55e;
+  font-size: 0.95em;
+  font-weight: 500;
+}
+.offline-text {
+  color: #a3a3a3;
+  font-size: 0.95em;
+  font-weight: 500;
+}
+
 /* Mobile-specific styles */
 @media screen and (max-width: 768px) {
   body, html {

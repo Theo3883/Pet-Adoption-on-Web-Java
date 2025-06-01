@@ -273,12 +273,21 @@ async function loadConversation(otherUserId, showLoader = true) {
         };
       }
     }
-    
     displayMessages(currentMessages, otherUserId);
-    
     // Update conversation UI
-    document.getElementById('conversation-title').textContent = currentConversationUser ? 
-      currentConversationUser.name : 'Messages';
+    const conversationTitleElem = document.getElementById('conversation-title');
+    if (currentConversationUser) {
+      conversationTitleElem.innerHTML = `${currentConversationUser.name} <span id="contact-online-status"></span>`;
+      fetchContactOnlineStatus(currentConversationUser.userId);      // Poll contact's online status every 15 seconds while this conversation is open
+      if (window.contactStatusInterval) clearInterval(window.contactStatusInterval);
+      window.contactStatusInterval = setInterval(() => {
+        fetchContactOnlineStatus(currentConversationUser.userId);
+      }, 15000);
+    } else {
+      conversationTitleElem.textContent = 'Messages';
+      updateContactOnlineStatus(false);
+      if (window.contactStatusInterval) clearInterval(window.contactStatusInterval);
+    }
     
     const messagesContainer = document.querySelector('.messages-container');
     const conversationsList = document.querySelector('.conversations-list');
@@ -538,4 +547,38 @@ document.addEventListener('DOMContentLoaded', () => {
   initialize();
   
   setTimeout(checkUrlForDirectMessage, 500);
+});
+
+async function fetchContactOnlineStatus(userId) {
+  try {
+    const token = localStorage.getItem('Token');
+    if (!token || !userId) return;
+    const response = await fetch(`http://localhost:3000/users/${userId}/online-status`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!response.ok) throw new Error('Failed to fetch online status');
+    const data = await response.json();
+    updateContactOnlineStatus(data.online === true);
+  } catch (e) {
+    updateContactOnlineStatus(false);
+  }
+}
+
+function updateContactOnlineStatus(isOnline) {
+  const statusElem = document.getElementById('contact-online-status');
+  if (!statusElem) return;
+  if (isOnline) {
+    statusElem.innerHTML = '<span class="online-dot"></span> <span class="online-text">Online</span>';
+  } else {
+    statusElem.innerHTML = '<span class="offline-dot"></span> <span class="offline-text">Offline</span>';
+  }
+}
+
+// On page unload, clear the contact status polling interval
+window.addEventListener('beforeunload', () => {
+  if (window.contactStatusInterval) clearInterval(window.contactStatusInterval);
 });
