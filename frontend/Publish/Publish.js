@@ -600,6 +600,7 @@ async function submitPublishForm(event) {
 
     // Step 4: Upload and add multimedia if present
     const multimedia = [];
+    const uploadPromises = [];
     
     // Main photo
     const photoInput = document.getElementById("photo");
@@ -607,17 +608,23 @@ async function submitPublishForm(event) {
       const photoFile = photoInput.files[0];
       const mediaType = "photo";
 
-      try {
-        const serverPath = await uploadFileToServer(photoFile, mediaType);
-        multimedia.push({
-          mediaType: mediaType,
-          url: serverPath,
-          description: "Main photo",
+      // Create a promise for the main photo upload
+      const mainPhotoPromise = uploadFileToServer(photoFile, mediaType)
+        .then(serverPath => {
+          multimedia.push({
+            mediaType: mediaType,
+            url: serverPath,
+            description: "Main photo",
+          });
+          console.log("Main photo uploaded successfully");
+        })
+        .catch(error => {
+          console.error("Error uploading main photo:", error);
+          // Continue with other operations instead of failing completely
         });
-      } catch (uploadError) {
-        console.error("Error uploading main photo:", uploadError);
-        // Continue with other operations instead of failing completely
-      }
+      
+      // Add to the list of upload promises
+      uploadPromises.push(mainPhotoPromise);
     }
 
     // Additional multimedia entries
@@ -632,19 +639,30 @@ async function submitPublishForm(event) {
         const mediaType = mediaTypeSelect ? mediaTypeSelect.value : "photo";
         const description = sanitizeInput(descriptionInput ? descriptionInput.value : "");
 
-        try {
-          const serverPath = await uploadFileToServer(file, mediaType);
-          multimedia.push({
-            mediaType: mediaType,
-            url: serverPath,
-            description: description,
+        // Create a promise for each additional media upload
+        const additionalMediaPromise = uploadFileToServer(file, mediaType)
+          .then(serverPath => {
+            multimedia.push({
+              mediaType: mediaType,
+              url: serverPath,
+              description: description,
+            });
+            console.log(`Additional ${mediaType} uploaded successfully`);
+          })
+          .catch(error => {
+            console.error("Error uploading additional media:", error);
+            // Continue with other files instead of failing completely
           });
-        } catch (uploadError) {
-          console.error("Error uploading additional media:", uploadError);
-          // Continue with other files instead of failing completely
-        }
+        
+        // Add to the list of upload promises
+        uploadPromises.push(additionalMediaPromise);
       }
     }
+
+    // Wait for all uploads to complete in parallel
+    console.log(`Waiting for ${uploadPromises.length} file uploads to complete...`);
+    await Promise.all(uploadPromises);
+    console.log("All file uploads completed!");
 
     if (multimedia.length > 0) {
       console.log("Step 4: Adding multimedia:", multimedia);
@@ -697,7 +715,6 @@ async function submitPublishForm(event) {
 
 // Helper function to upload files to the server
 async function uploadFileToServer(file, mediaType) {
-
   const formData = new FormData();
   
   // Append the file with its original name to preserve the extension
@@ -712,8 +729,11 @@ async function uploadFileToServer(file, mediaType) {
   const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for uploads
   
   try {
-    console.log(`Sending to ${API_URL}/upload`);
-    const uploadResponse = await fetch(`${API_URL}/upload`, {
+    const useAsync = true;
+    const endpoint = useAsync ? `${API_URL}/upload/async` : `${API_URL}/upload`;
+    
+    console.log(`Sending to ${endpoint}`);
+    const uploadResponse = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,

@@ -18,19 +18,16 @@ public class FileStorageService {
     
     @Value("${file.upload.dir:uploads}")
     private String uploadDir;
-    
-    public String storeFile(MultipartFile file, String mediaType) throws IOException {
+      public String storeFile(MultipartFile file, String mediaType) throws IOException {
         if (file.isEmpty()) {
             throw new IOException("Cannot store empty file");
         }
         
-        // Create upload directory if it doesn't exist
         Path uploadPath = Paths.get(uploadDir, mediaType);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
         
-        // Generate unique filename
         String originalFilename = file.getOriginalFilename();
         String fileExtension = "";
         if (originalFilename != null && originalFilename.contains(".")) {
@@ -100,4 +97,4 @@ public class FileStorageService {
     public String getPublicUrl(String mediaType, String filename) {
         return "/server/" + mediaType + "/" + filename;
     }
-} 
+}
