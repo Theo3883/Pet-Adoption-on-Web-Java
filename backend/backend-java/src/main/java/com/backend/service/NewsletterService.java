@@ -1,5 +1,6 @@
 package com.backend.service;
 
+import com.backend.exception.ResourceNotFoundException;
 import com.backend.model.Newsletter;
 import com.backend.model.User;
 import com.backend.repository.NewsletterRepository;
@@ -35,11 +36,10 @@ public class NewsletterService {
             return subscriptionMap;
         }).collect(Collectors.toList());
     }
-    
-    public void updateSubscriptions(Long userId, List<String> speciesList) {
+      public void updateSubscriptions(Long userId, List<String> speciesList) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
-            throw new RuntimeException("User not found");
+            throw ResourceNotFoundException.userNotFound(userId);
         }
         
         User user = userOpt.get();

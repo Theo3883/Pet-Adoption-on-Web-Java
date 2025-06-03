@@ -47,6 +47,7 @@ public class SerializableFileData implements Serializable {
     // Export metadata
     private LocalDateTime exportedAt;
     private String exportedBy;
+    @Builder.Default
     private String packageVersion = "1.0";
     
     // File integrity

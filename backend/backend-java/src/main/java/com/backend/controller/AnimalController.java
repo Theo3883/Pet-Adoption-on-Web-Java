@@ -27,196 +27,147 @@ public class AnimalController {
     
     private final AnimalService animalService;
     private final JwtService jwtService;
-    
+      
     @GetMapping("/animals/all")
-    public ResponseEntity<?> getAllAnimals(HttpServletRequest httpRequest) {
-        try {
-            Long userId = extractUserIdFromToken(httpRequest);
-            if (userId == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Authentication required");
-                return ResponseEntity.status(401).body(error);
-            }
-            
-            List<AnimalResponse> animals = animalService.getAllAnimals();
-            return ResponseEntity.ok(animals);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+    public ResponseEntity<List<AnimalResponse>> getAllAnimals(HttpServletRequest httpRequest) {
+        Long userId = extractUserIdFromToken(httpRequest);
+        if (userId == null) {
+            throw new com.backend.exception.AuthenticationException("Authentication required");
         }
-    }
-
+        
+        List<AnimalResponse> animals = animalService.getAllAnimals();
+        return ResponseEntity.ok(animals);
+    }   
+    
     @PostMapping("/animals/details")
-    public ResponseEntity<?> getAnimalDetailsById(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
+    public ResponseEntity<AnimalDetailResponse> getAnimalDetailsById(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
+        log.debug("Received animal details request: {}", request);
+        
+        Long userId = extractUserIdFromToken(httpRequest);
+        if (userId == null) {
+            log.warn("Authentication failed for animal details request");
+            throw new com.backend.exception.AuthenticationException("Authentication required");
+        }
+        
+        log.debug("User authenticated: {}", userId);
+        
+        if (request.get("animalId") == null) {
+            log.warn("Missing animalId in request: {}", request);
+            throw new com.backend.exception.ValidationException("animalId is required");
+        }
+        
+        Long animalId;
         try {
-            log.debug("Received animal details request: {}", request);
-            
-            Long userId = extractUserIdFromToken(httpRequest);
-            if (userId == null) {
-                log.warn("Authentication failed for animal details request");
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Authentication required");
-                return ResponseEntity.status(401).body(error);
-            }
-            
-            log.debug("User authenticated: {}", userId);
-            
-            if (request.get("animalId") == null) {
-                log.warn("Missing animalId in request: {}", request);
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "animalId is required");
-                return ResponseEntity.status(400).body(error);
-            }
-            
-            Long animalId = Long.valueOf(request.get("animalId").toString());
-            log.info("Getting details for animal ID: {} requested by user ID: {}", animalId, userId);
-            
-            try {
-                animalService.incrementViews(animalId);
-                log.debug("Views incremented for animal ID: {}", animalId);
-            } catch (Exception e) {
-                log.warn("Failed to increment views for animal ID {}: {}", animalId, e.getMessage());
-            }
-            
-            // Get detailed animal information
-            Optional<AnimalDetailResponse> animalDetail = animalService.getAnimalDetailById(animalId);
-            if (animalDetail.isPresent()) {
-                log.info("Successfully retrieved details for animal ID: {}", animalId);
-                return ResponseEntity.ok(animalDetail.get());
-            } else {
-                log.warn("Animal not found with ID: {}", animalId);
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Animal not found");
-                return ResponseEntity.status(404).body(error);
-            }
+            animalId = Long.valueOf(request.get("animalId").toString());
         } catch (NumberFormatException e) {
             log.error("Invalid animalId format in request: {}", request, e);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Invalid animalId format");
-            return ResponseEntity.status(400).body(error);
-        } catch (Exception e) {
-            log.error("Error getting animal details for request {}: {}", request, e.getMessage(), e);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Internal server error: " + e.getMessage());
-            return ResponseEntity.status(500).body(error);
+            throw com.backend.exception.ValidationException.invalidFormat("animalId");
         }
-    }
-
+        
+        log.info("Getting details for animal ID: {} requested by user ID: {}", animalId, userId);
+        
+        try {
+            animalService.incrementViews(animalId);
+            log.debug("Views incremented for animal ID: {}", animalId);
+        } catch (Exception e) {
+            log.warn("Failed to increment views for animal ID {}: {}", animalId, e.getMessage());
+        }
+        
+        Optional<AnimalDetailResponse> animalDetail = animalService.getAnimalDetailById(animalId);
+        if (animalDetail.isPresent()) {
+            log.info("Successfully retrieved details for animal ID: {}", animalId);
+            return ResponseEntity.ok(animalDetail.get());
+        } else {
+            log.warn("Animal not found with ID: {}", animalId);
+            throw com.backend.exception.ResourceNotFoundException.animalNotFound(animalId);
+        }
+    }    
+    
     @PostMapping("/animals/species")
-    public ResponseEntity<?> getAnimalsBySpecies(@RequestBody Map<String, String> request, HttpServletRequest httpRequest) {
-        try {
-            Long userId = extractUserIdFromToken(httpRequest);
-            if (userId == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Authentication required");
-                return ResponseEntity.status(401).body(error);
-            }
-            
-            String species = request.get("species");
-            if (species == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Species is required");
-                return ResponseEntity.badRequest().body(error);
-            }
-            
-            List<AnimalResponse> animals = animalService.getAnimalsBySpecies(species);
-            List<Object[]> popularBreeds = animalService.getPopularBreedsBySpecies(species);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("animals", animals);
-            response.put("popularBreeds", popularBreeds);
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+    public ResponseEntity<Map<String, Object>> getAnimalsBySpecies(@RequestBody Map<String, String> request, HttpServletRequest httpRequest) {
+        Long userId = extractUserIdFromToken(httpRequest);
+        if (userId == null) {
+            throw new com.backend.exception.AuthenticationException("Authentication required");
         }
-    }
-
+        
+        String species = request.get("species");
+        if (species == null) {
+            throw com.backend.exception.ValidationException.missingRequiredField("species");
+        }
+        
+        List<AnimalResponse> animals = animalService.getAnimalsBySpecies(species);
+        List<Object[]> popularBreeds = animalService.getPopularBreedsBySpecies(species);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("animals", animals);
+        response.put("popularBreeds", popularBreeds);
+        
+        return ResponseEntity.ok(response);
+    }   
+    
     @PostMapping("/animals/create")
-    public ResponseEntity<?> createAnimal(@RequestBody AnimalCreationRequest request, HttpServletRequest httpRequest) {
-        try {
-            Long userId = extractUserIdFromToken(httpRequest);
-            if (userId == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Authentication required");
-                return ResponseEntity.status(401).body(error);
-            }
-
-            log.info("Creating basic animal for user ID: {}", userId);
-            
-            // Create only basic animal info
-            AnimalRequest basicRequest = new AnimalRequest();
-            basicRequest.setName(request.getName());
-            basicRequest.setBreed(request.getBreed());
-            basicRequest.setSpecies(request.getSpecies());
-            basicRequest.setAge(request.getAge());
-            basicRequest.setGender(request.getGender());
-            
-            AnimalResponse animal = animalService.createBasicAnimal(userId, basicRequest);
-            
-            log.info("Basic animal created successfully with ID: {}", animal.getAnimalId());
-            
-            return ResponseEntity.ok(animal);
-        } catch (Exception e) {
-            log.error("Error creating basic animal: {}", e.getMessage(), e);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(500).body(error);
+    public ResponseEntity<AnimalResponse> createAnimal(@Valid @RequestBody AnimalCreationRequest request, HttpServletRequest httpRequest) {
+        Long userId = extractUserIdFromToken(httpRequest);
+        if (userId == null) {
+            throw new com.backend.exception.AuthenticationException("Authentication required");
         }
-    }
 
+        log.info("Creating basic animal for user ID: {}", userId);
+        
+        AnimalRequest basicRequest = new AnimalRequest();
+        basicRequest.setName(request.getName());
+        basicRequest.setBreed(request.getBreed());
+        basicRequest.setSpecies(request.getSpecies());
+        basicRequest.setAge(request.getAge());
+        basicRequest.setGender(request.getGender());
+        
+        AnimalResponse animal = animalService.createBasicAnimal(userId, basicRequest);
+        
+        log.info("Basic animal created successfully with ID: {}", animal.getAnimalId());
+        
+        return ResponseEntity.ok(animal);
+    }    
+    
     @DeleteMapping("/animals/delete")
-    public ResponseEntity<?> deleteAnimal(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
-        try {
-            Long userId = extractUserIdFromToken(httpRequest);
-            if (userId == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Authentication required");
-                return ResponseEntity.status(401).body(error);
-            }
-            
-            Long animalId = Long.valueOf(request.get("animalId").toString());
-            
-            animalService.deleteAnimal(animalId);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Animal deleted successfully");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+    public ResponseEntity<Map<String, String>> deleteAnimal(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
+        Long userId = extractUserIdFromToken(httpRequest);
+        if (userId == null) {
+            throw new com.backend.exception.AuthenticationException("Authentication required");
         }
-    }
-
+        
+        if (request.get("animalId") == null) {
+            throw com.backend.exception.ValidationException.missingRequiredField("animalId");
+        }
+        
+        Long animalId;
+        try {
+            animalId = Long.valueOf(request.get("animalId").toString());
+        } catch (NumberFormatException e) {
+            throw com.backend.exception.ValidationException.invalidFormat("animalId");
+        }
+        
+        animalService.deleteAnimal(animalId);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Animal deleted successfully");
+        return ResponseEntity.ok(response);
+    }    
+    
     @GetMapping("/animals/top-by-city")
-    public ResponseEntity<?> getTopAnimalsByCity(@RequestParam Long userId, HttpServletRequest httpRequest) {
-        try {
-            // Check if user is authenticated
-            String authHeader = httpRequest.getHeader("Authorization");
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Access denied. Please log in.");
-                return ResponseEntity.status(403).body(error);
-            }
-
-            String token = authHeader.substring(7);
-            Long tokenUserId = jwtService.extractUserId(token);
-            if (tokenUserId == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Invalid token");
-                return ResponseEntity.status(401).body(error);
-            }
-
-            List<AnimalResponse> animals = animalService.getTopAnimalsByUserCity(userId);
-            return ResponseEntity.ok(animals);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Internal Server Error");
-            return ResponseEntity.status(500).body(error);
+    public ResponseEntity<List<AnimalResponse>> getTopAnimalsByCity(@RequestParam Long userId, HttpServletRequest httpRequest) {
+        // Check if user is authenticated
+        String authHeader = httpRequest.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new com.backend.exception.AuthorizationException("Access denied. Please log in.");
         }
+
+        String token = authHeader.substring(7);
+        Long tokenUserId = jwtService.extractUserId(token);
+        if (tokenUserId == null) {
+            throw new com.backend.exception.AuthenticationException("Invalid token");
+        }
+
+        List<AnimalResponse> animals = animalService.getTopAnimalsByUserCity(userId);
+        return ResponseEntity.ok(animals);
     }
     
     private Long extractUserIdFromToken(HttpServletRequest request) {
@@ -230,109 +181,71 @@ public class AnimalController {
             }
         }
         return null;
-    }
-
+    }    
+    
     @PostMapping("/animals/{animalId}/medical-history")
-    public ResponseEntity<?> addMedicalHistory(@PathVariable Long animalId, 
-                                             @RequestBody List<MedicalHistoryCreationRequest> medicalHistoryRequests,
+    public ResponseEntity<Map<String, String>> addMedicalHistory(@PathVariable Long animalId, 
+                                             @Valid @RequestBody List<MedicalHistoryCreationRequest> medicalHistoryRequests,
                                              HttpServletRequest httpRequest) {
-        try {
-            Long userId = extractUserIdFromToken(httpRequest);
-            if (userId == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Authentication required");
-                return ResponseEntity.status(401).body(error);
-            }
-
-            log.info("Adding medical history for animal ID: {} by user ID: {}", animalId, userId);
-            animalService.addMedicalHistory(animalId, medicalHistoryRequests);
-            
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Medical history added successfully");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error adding medical history for animal ID {}: {}", animalId, e.getMessage(), e);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(500).body(error);
+        Long userId = extractUserIdFromToken(httpRequest);
+        if (userId == null) {
+            throw new com.backend.exception.AuthenticationException("Authentication required");
         }
-    }
 
+        log.info("Adding medical history for animal ID: {} by user ID: {}", animalId, userId);
+        animalService.addMedicalHistory(animalId, medicalHistoryRequests);
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Medical history added successfully");
+        return ResponseEntity.ok(response);
+    }   
+    
     @PostMapping("/animals/{animalId}/feeding-schedule")
-    public ResponseEntity<?> addFeedingSchedule(@PathVariable Long animalId,
-                                              @RequestBody List<FeedingScheduleCreationRequest> feedingScheduleRequests,
+    public ResponseEntity<Map<String, String>> addFeedingSchedule(@PathVariable Long animalId,
+                                              @Valid @RequestBody List<FeedingScheduleCreationRequest> feedingScheduleRequests,
                                               HttpServletRequest httpRequest) {
-        try {
-            Long userId = extractUserIdFromToken(httpRequest);
-            if (userId == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Authentication required");
-                return ResponseEntity.status(401).body(error);
-            }
-
-            log.info("Adding feeding schedule for animal ID: {} by user ID: {}", animalId, userId);
-            animalService.addFeedingSchedule(animalId, feedingScheduleRequests);
-            
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Feeding schedule added successfully");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error adding feeding schedule for animal ID {}: {}", animalId, e.getMessage(), e);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(500).body(error);
-        }
+        Long userId = extractUserIdFromToken(httpRequest);
+        if (userId == null) {
+            throw new com.backend.exception.AuthenticationException("Authentication required");
+        }        log.info("Adding feeding schedule for animal ID: {} by user ID: {}", animalId, userId);
+        animalService.addFeedingSchedule(animalId, feedingScheduleRequests);
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Feeding schedule added successfully");
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/animals/{animalId}/multimedia")
-    public ResponseEntity<?> addMultimedia(@PathVariable Long animalId,
-                                         @RequestBody List<MultimediaCreationRequest> multimediaRequests,
+    public ResponseEntity<Map<String, String>> addMultimedia(@PathVariable Long animalId,
+                                         @Valid @RequestBody List<MultimediaCreationRequest> multimediaRequests,
                                          HttpServletRequest httpRequest) {
-        try {
-            Long userId = extractUserIdFromToken(httpRequest);
-            if (userId == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Authentication required");
-                return ResponseEntity.status(401).body(error);
-            }
-
-            log.info("Adding multimedia for animal ID: {} by user ID: {}", animalId, userId);
-            animalService.addMultimedia(animalId, multimediaRequests);
-            
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Multimedia added successfully");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error adding multimedia for animal ID {}: {}", animalId, e.getMessage(), e);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(500).body(error);
+        Long userId = extractUserIdFromToken(httpRequest);
+        if (userId == null) {
+            throw new com.backend.exception.AuthenticationException("Authentication required");
         }
-    }
 
+        log.info("Adding multimedia for animal ID: {} by user ID: {}", animalId, userId);
+        animalService.addMultimedia(animalId, multimediaRequests);
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Multimedia added successfully");
+        return ResponseEntity.ok(response);
+    }    
+    
     @PostMapping("/animals/{animalId}/relations")
-    public ResponseEntity<?> addRelations(@PathVariable Long animalId,
-                                        @RequestBody RelationsCreationRequest relationsRequest,
+    public ResponseEntity<Map<String, String>> addRelations(@PathVariable Long animalId,
+                                        @Valid @RequestBody RelationsCreationRequest relationsRequest,
                                         HttpServletRequest httpRequest) {
-        try {
-            Long userId = extractUserIdFromToken(httpRequest);
-            if (userId == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Authentication required");
-                return ResponseEntity.status(401).body(error);
-            }
-
-            log.info("Adding relations for animal ID: {} by user ID: {}", animalId, userId);
-            animalService.addRelations(animalId, relationsRequest);
-            
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Relations added successfully");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error adding relations for animal ID {}: {}", animalId, e.getMessage(), e);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(500).body(error);
+        Long userId = extractUserIdFromToken(httpRequest);
+        if (userId == null) {
+            throw new com.backend.exception.AuthenticationException("Authentication required");
         }
+
+        log.info("Adding relations for animal ID: {} by user ID: {}", animalId, userId);
+        animalService.addRelations(animalId, relationsRequest);
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Relations added successfully");
+        return ResponseEntity.ok(response);
     }
-} 
+}

@@ -1,6 +1,9 @@
 package com.backend.service;
 
 import com.backend.dto.FilePackageRequest;
+import com.backend.exception.FileException;
+import com.backend.exception.ValidationException;
+import com.backend.exception.ServiceException;
 import com.backend.model.*;
 import com.backend.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -81,10 +84,9 @@ public class CrossPlatformFileExchangeService {
             
             log.info("Successfully exported package {} with {} files", filePackage.getPackageId(), serializedFiles.size());
             return filePackage;
-            
-        } catch (Exception e) {
+              } catch (Exception e) {
             log.error("Error exporting file package: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to export file package: " + e.getMessage());
+            throw ServiceException.fileProcessingError("FilePackage", "Failed to export file package: " + e.getMessage());
         }
     }
     
@@ -129,10 +131,9 @@ public class CrossPlatformFileExchangeService {
             
             log.info("Import completed. Success: {}, Failed: {}", importedFiles.size(), failedFiles.size());
             return importResult;
-            
-        } catch (Exception e) {
+              } catch (Exception e) {
             log.error("Error importing file package: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to import file package: " + e.getMessage());
+            throw ServiceException.fileProcessingError("FilePackage", "Failed to import file package: " + e.getMessage());
         }
     }
     
@@ -190,10 +191,9 @@ public class CrossPlatformFileExchangeService {
     }
 
     private String importSerializedFile(SerializableFileData fileData, User importUser) throws Exception {
-        String calculatedChecksum = calculateFileChecksum(fileData.getFileContent());
-        if (!calculatedChecksum.equals(fileData.getChecksum())) {
-            throw new RuntimeException("File integrity check failed for: " + fileData.getFileName());
-        }
+        String calculatedChecksum = calculateFileChecksum(fileData.getFileContent());                if (!calculatedChecksum.equals(fileData.getChecksum())) {
+                    throw FileException.fileCorrupted(fileData.getFileName());
+                }
         
         String newFileName = UUID.randomUUID().toString() + getFileExtension(fileData.getFileName());
         
@@ -243,20 +243,18 @@ public class CrossPlatformFileExchangeService {
         newAnimal.setUser(importUser);
         
         return animalRepository.save(newAnimal);
-    }
-    
-    private void validatePackageIntegrity(SerializableFilePackage filePackage) {
+    }    private void validatePackageIntegrity(SerializableFilePackage filePackage) {
         if (filePackage.getFiles() == null || filePackage.getFiles().isEmpty()) {
-            throw new RuntimeException("Package contains no files");
+            throw ValidationException.missingRequiredField("Package files");
         }
         
         if (!filePackage.getTotalFiles().equals(filePackage.getFiles().size())) {
-            throw new RuntimeException("Package file count mismatch");
+            throw ValidationException.invalidValue("totalFiles", "File count mismatch");
         }
         
         String calculatedChecksum = calculatePackageChecksum(filePackage.getFiles());
         if (!calculatedChecksum.equals(filePackage.getPackageChecksum())) {
-            throw new RuntimeException("Package integrity check failed");
+            throw FileException.fileCorrupted("FilePackage");
         }
     }
     
@@ -268,9 +266,8 @@ public class CrossPlatformFileExchangeService {
             for (byte b : digest) {
                 sb.append(String.format("%02x", b));
             }
-            return sb.toString();
-        } catch (Exception e) {
-            throw new RuntimeException("Error calculating checksum", e);
+            return sb.toString();        } catch (Exception e) {
+            throw ServiceException.configurationError("MessageDigest", "Error calculating checksum: " + e.getMessage());
         }
     }
     
@@ -285,9 +282,8 @@ public class CrossPlatformFileExchangeService {
             for (byte b : digest) {
                 sb.append(String.format("%02x", b));
             }
-            return sb.toString();
-        } catch (Exception e) {
-            throw new RuntimeException("Error calculating package checksum", e);
+            return sb.toString();        } catch (Exception e) {
+            throw ServiceException.configurationError("MessageDigest", "Error calculating package checksum: " + e.getMessage());
         }
     }
     

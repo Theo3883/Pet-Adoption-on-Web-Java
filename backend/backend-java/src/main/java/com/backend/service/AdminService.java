@@ -1,5 +1,6 @@
 package com.backend.service;
 
+import com.backend.exception.AuthenticationException;
 import com.backend.model.Admin;
 import com.backend.repository.AdminRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,17 +16,16 @@ public class AdminService {
     
     private final AdminRepository adminRepository;
     private final JwtService jwtService;
-    
-    public String authenticateAdmin(String email, String password) {
+      public String authenticateAdmin(String email, String password) {
         Optional<Admin> adminOpt = adminRepository.findByEmail(email);
         
         if (adminOpt.isEmpty()) {
-            throw new RuntimeException("Invalid email or password");
+            throw AuthenticationException.invalidCredentials();
         }
         
         Admin admin = adminOpt.get();
         if (!password.equals(admin.getPassword())) {
-            throw new RuntimeException("Invalid email or password");
+            throw AuthenticationException.invalidCredentials();
         }
         
         return jwtService.generateToken(admin.getAdminId(), admin.getEmail(), true);

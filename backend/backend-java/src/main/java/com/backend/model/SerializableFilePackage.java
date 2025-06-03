@@ -22,6 +22,7 @@ public class SerializableFilePackage implements Serializable {
     private String packageId;
     private String packageName;
     private String description;
+    @Builder.Default
     private String packageVersion = "1.0";
     
     // Package metadata

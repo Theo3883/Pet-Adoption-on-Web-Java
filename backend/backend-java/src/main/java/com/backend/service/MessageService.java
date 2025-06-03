@@ -1,5 +1,6 @@
 package com.backend.service;
 
+import com.backend.exception.ResourceNotFoundException;
 import com.backend.model.Message;
 import com.backend.model.User;
 import com.backend.repository.MessageRepository;
@@ -28,13 +29,15 @@ import java.util.stream.Collectors;
 public class MessageService {
       private final MessageRepository messageRepository;
     private final UserRepository userRepository;
-    
-    public Long sendMessage(Long senderId, Long receiverId, String content) {
+      public Long sendMessage(Long senderId, Long receiverId, String content) {
         Optional<User> sender = userRepository.findById(senderId);
         Optional<User> receiver = userRepository.findById(receiverId);
         
-        if (sender.isEmpty() || receiver.isEmpty()) {
-            throw new RuntimeException("User not found");
+        if (sender.isEmpty()) {
+            throw ResourceNotFoundException.userNotFound(senderId);
+        }
+        if (receiver.isEmpty()) {
+            throw ResourceNotFoundException.userNotFound(receiverId);
         }
         
         Message message = new Message();

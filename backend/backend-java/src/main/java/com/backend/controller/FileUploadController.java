@@ -1,5 +1,7 @@
 package com.backend.controller;
 
+import com.backend.exception.FileException;
+import com.backend.exception.ValidationException;
 import com.backend.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -17,31 +19,28 @@ import java.util.Map;
 public class FileUploadController {
     
     private final FileStorageService fileStorageService;
-    
+      
     @PostMapping("/upload")
-    public ResponseEntity<?> uploadFile(
+    public ResponseEntity<Map<String, Object>> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "mediaType", defaultValue = "photo") String mediaType) {
         
-        try {
-            if (file.isEmpty()) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "No file uploaded");
-                return ResponseEntity.badRequest().body(error);
-            }
-            
-            // Determine media type based on file if not specified
-            if ("photo".equals(mediaType)) {
-                String contentType = file.getContentType();
-                if (contentType != null) {
-                    if (contentType.startsWith("video/")) {
-                        mediaType = "video";
-                    } else if (contentType.startsWith("audio/")) {
-                        mediaType = "audio";
-                    }
+        if (file.isEmpty()) {
+            throw ValidationException.missingRequiredField("file");
+        }
+        
+        if ("photo".equals(mediaType)) {
+            String contentType = file.getContentType();
+            if (contentType != null) {
+                if (contentType.startsWith("video/")) {
+                    mediaType = "video";
+                } else if (contentType.startsWith("audio/")) {
+                    mediaType = "audio";
                 }
             }
-            
+        }
+        
+        try {
             String filename = fileStorageService.storeFile(file, mediaType);
             String publicUrl = fileStorageService.getPublicUrl(mediaType, filename);
             
@@ -54,9 +53,7 @@ public class FileUploadController {
             return ResponseEntity.ok(response);
             
         } catch (IOException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Failed to upload file: " + e.getMessage());
-            return ResponseEntity.status(500).body(error);
+            throw FileException.fileUploadFailed(file.getOriginalFilename());
         }
     }
     

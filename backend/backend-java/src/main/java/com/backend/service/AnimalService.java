@@ -36,15 +36,14 @@ public class AnimalService {
     
     @PersistenceContext
     private EntityManager entityManager;
-    
-    @Transactional
+      @Transactional
     public AnimalResponse createBasicAnimal(Long userId, AnimalRequest request) {
         log.info("Creating basic animal for userId: {}", userId);
         
         Optional<User> userOpt = userService.findById(userId);
         if (userOpt.isEmpty()) {
             log.error("User not found with id: {}", userId);
-            throw new RuntimeException("User not found");
+            throw com.backend.exception.ResourceNotFoundException.userNotFound(userId);
         }
         
         User user = userOpt.get();
@@ -63,15 +62,14 @@ public class AnimalService {
         
         return convertToAnimalResponse(savedAnimal);
     }
-    
-    @Transactional
+      @Transactional
     public void addMedicalHistory(Long animalId, List<MedicalHistoryCreationRequest> medicalHistoryRequests) {
         log.info("Adding medical history for animalId: {}", animalId);
         
         Optional<Animal> animalOpt = animalRepository.findById(animalId);
         if (animalOpt.isEmpty()) {
             log.error("Animal not found with ID: {}", animalId);
-            throw new RuntimeException("Animal not found with ID: " + animalId);
+            throw com.backend.exception.ResourceNotFoundException.animalNotFound(animalId);
         }
         
         Animal animal = animalOpt.get();
@@ -100,19 +98,18 @@ public class AnimalService {
             log.info("Added {} medical history records for animal ID: {}", medicalHistoryRequests.size(), animalId);
         }
     }
-    
-    @Transactional
+      @Transactional
     public void addFeedingSchedule(Long animalId, List<FeedingScheduleCreationRequest> feedingScheduleRequests) {
         log.info("Adding feeding schedule for animalId: {}", animalId);
         
         Optional<Animal> animalOpt = animalRepository.findById(animalId);
         if (animalOpt.isEmpty()) {
             log.error("Animal not found with ID: {}", animalId);
-            throw new RuntimeException("Animal not found with ID: " + animalId);
+            throw com.backend.exception.ResourceNotFoundException.animalNotFound(animalId);
         }
         
         if (feedingScheduleRequests != null && !feedingScheduleRequests.isEmpty()) {
-            FeedingScheduleCreationRequest request = feedingScheduleRequests.get(0);
+            FeedingScheduleCreationRequest request = feedingScheduleRequests.getFirst();
             
             insertFeedingScheduleWithVArray(animalId, request.getFeedingTimes(), request.getFoodType(), request.getNotes());
             log.info("Added feeding schedule for animal ID: {}", animalId);
@@ -125,11 +122,10 @@ public class AnimalService {
             log.warn("No feeding times provided for animal ID: {}", animalId);
             return;
         }
-        
-        Optional<Animal> animalOpt = animalRepository.findById(animalId);
+          Optional<Animal> animalOpt = animalRepository.findById(animalId);
         if (animalOpt.isEmpty()) {
             log.error("Animal not found with ID: {}", animalId);
-            throw new RuntimeException("Animal not found with ID: " + animalId);
+            throw com.backend.exception.ResourceNotFoundException.animalNotFound(animalId);
         }
         
         StringBuilder varrayConstructor = new StringBuilder("feeding_time_array(");
@@ -169,10 +165,14 @@ public class AnimalService {
             query.setParameter(3, notes);
             
             int result = query.executeUpdate();
-            log.info("Feeding schedule inserted successfully for animal ID: {}, rows affected: {}", animalId, result);
-        } catch (Exception e) {
+            log.info("Feeding schedule inserted successfully for animal ID: {}, rows affected: {}", animalId, result);        } catch (Exception e) {
             log.error("Error inserting feeding schedule for animal ID {}: {}", animalId, e.getMessage(), e);
-            throw new RuntimeException("Failed to insert feeding schedule: " + e.getMessage(), e);
+            throw new com.backend.exception.DatabaseException(
+                "DB_INSERT_FAILURE",
+                "Failed to save feeding schedule. Please try again.",
+                "Failed to insert feeding schedule for animal ID " + animalId + ": " + e.getMessage(),
+                e
+            );
         }
     }
     
@@ -196,8 +196,7 @@ public class AnimalService {
         // Invalid format
         return null;
     }
-    
-    @Transactional
+      @Transactional
     public void addMultimedia(Long animalId, List<MultimediaCreationRequest> multimediaRequests) {
         log.debug("Adding multimedia for animalId: {}", animalId);
         log.debug("Multimedia requests count: {}", multimediaRequests != null ? multimediaRequests.size() : 0);
@@ -205,7 +204,7 @@ public class AnimalService {
         Optional<Animal> animalOpt = animalRepository.findById(animalId);
         if (animalOpt.isEmpty()) {
             log.error("Animal not found with ID: {}", animalId);
-            throw new RuntimeException("Animal not found with ID: " + animalId);
+            throw com.backend.exception.ResourceNotFoundException.animalNotFound(animalId);
         }
         
         Animal animal = animalOpt.get();
@@ -238,8 +237,7 @@ public class AnimalService {
             log.debug("No multimedia data to add for animal ID: {}", animalId);
         }
     }
-    
-    @Transactional
+      @Transactional
     public void addRelations(Long animalId, RelationsCreationRequest relationsRequest) {
         log.debug("Adding relations for animalId: {}", animalId);
         log.debug("Relations request: {}", relationsRequest != null ? relationsRequest.getFriendWith() : "null");
@@ -247,7 +245,7 @@ public class AnimalService {
         Optional<Animal> animalOpt = animalRepository.findById(animalId);
         if (animalOpt.isEmpty()) {
             log.error("Animal not found with ID: {}", animalId);
-            throw new RuntimeException("Animal not found with ID: " + animalId);
+            throw com.backend.exception.ResourceNotFoundException.animalNotFound(animalId);
         }
         
         Animal animal = animalOpt.get();
@@ -383,10 +381,9 @@ public class AnimalService {
     public void incrementViews(Long animalId) {
         animalRepository.incrementViews(animalId);
     }
-    
-    public void deleteAnimal(Long animalId) {
+      public void deleteAnimal(Long animalId) {
         if (!animalRepository.existsById(animalId)) {
-            throw new RuntimeException("Animal not found");
+            throw com.backend.exception.ResourceNotFoundException.animalNotFound(animalId);
         }
         animalRepository.deleteById(animalId);
     }

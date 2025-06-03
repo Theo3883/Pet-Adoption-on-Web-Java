@@ -1,5 +1,6 @@
 package com.backend.controller;
 
+import com.backend.exception.AuthenticationException;
 import com.backend.service.NewsletterService;
 import com.backend.service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,49 +19,33 @@ public class NewsletterController {
     
     private final NewsletterService newsletterService;
     private final JwtService jwtService;
-    
+      
     @GetMapping("/newsletter/subscriptions")
-    public ResponseEntity<?> getSubscriptions(HttpServletRequest httpRequest) {
-        try {
-            Long userId = extractUserIdFromToken(httpRequest);
-            if (userId == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "User authentication required");
-                return ResponseEntity.status(401).body(error);
-            }
-            
-            List<Map<String, Object>> subscriptions = newsletterService.getSubscriptions(userId);
-            return ResponseEntity.ok(subscriptions);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Internal Server Error");
-            return ResponseEntity.status(500).body(error);
+    public ResponseEntity<List<Map<String, Object>>> getSubscriptions(HttpServletRequest httpRequest) {
+        Long userId = extractUserIdFromToken(httpRequest);
+        if (userId == null) {
+            throw AuthenticationException.authenticationRequired();
         }
+        
+        List<Map<String, Object>> subscriptions = newsletterService.getSubscriptions(userId);
+        return ResponseEntity.ok(subscriptions);
     }
-    
+      
     @PostMapping("/newsletter/update")
-    public ResponseEntity<?> updateSubscriptions(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
-        try {
-            Long userId = extractUserIdFromToken(httpRequest);
-            if (userId == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "User authentication required");
-                return ResponseEntity.status(401).body(error);
-            }
-            
-            @SuppressWarnings("unchecked")
-            List<String> species = (List<String>) request.get("species");
-            
-            newsletterService.updateSubscriptions(userId, species);
-            
-            Map<String, Boolean> response = new HashMap<>();
-            response.put("success", true);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Internal Server Error");
-            return ResponseEntity.status(500).body(error);
+    public ResponseEntity<Map<String, Boolean>> updateSubscriptions(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
+        Long userId = extractUserIdFromToken(httpRequest);
+        if (userId == null) {
+            throw AuthenticationException.authenticationRequired();
         }
+        
+        @SuppressWarnings("unchecked")
+        List<String> species = (List<String>) request.get("species");
+        
+        newsletterService.updateSubscriptions(userId, species);
+        
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("success", true);
+        return ResponseEntity.ok(response);
     }
     
     private Long extractUserIdFromToken(HttpServletRequest request) {

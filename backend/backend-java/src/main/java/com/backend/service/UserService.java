@@ -4,6 +4,9 @@ import com.backend.dto.UserLoginRequest;
 import com.backend.dto.UserResponse;
 import com.backend.dto.UserSignupRequest;
 import com.backend.dto.AddressResponse;
+import com.backend.exception.AuthenticationException;
+import com.backend.exception.ResourceNotFoundException;
+import com.backend.exception.ValidationException;
 import com.backend.model.User;
 import com.backend.model.Address;
 import com.backend.repository.UserRepository;
@@ -24,16 +27,15 @@ public class UserService {
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
     private final JwtService jwtService;
-    
-    public UserResponse createUser(UserSignupRequest request) {
+      public UserResponse createUser(UserSignupRequest request) {
         if (request.getFirstName() == null || request.getLastName() == null || 
             request.getEmail() == null || request.getPassword() == null || 
             request.getPhone() == null || request.getAddress() == null) {
-            throw new RuntimeException("Missing required fields");
+            throw ValidationException.missingRequiredField("required user fields");
         }
         
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw ValidationException.emailAlreadyExists();
         }
         
         User user = new User();
@@ -72,12 +74,12 @@ public class UserService {
         Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
         
         if (userOpt.isEmpty()) {
-            throw new RuntimeException("Invalid credentials");
+            throw AuthenticationException.invalidCredentials();
         }
         
         User user = userOpt.get();
         if (!request.getPassword().equals(user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw AuthenticationException.invalidCredentials();
         }
         
         String createdAtString = "";
@@ -108,7 +110,7 @@ public class UserService {
     
     public void deleteUser(Long userId) {
         if (!userRepository.existsById(userId)) {
-            throw new RuntimeException("User not found");
+            throw ResourceNotFoundException.userNotFound(userId);
         }
         userRepository.deleteById(userId);
     }
