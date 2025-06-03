@@ -19,7 +19,6 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -53,7 +52,7 @@ public class CrossPlatformFileExchangeService {
             List<SerializableFileData> serializedFiles = request.getFileIds().stream()
                 .map(fileId -> loadAndSerializeFile(fileId, request.isIncludeMetadata()))
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .toList();
             
             long totalSize = serializedFiles.stream()
                 .mapToLong(file -> file.getFileSize() != null ? file.getFileSize() : 0)
@@ -77,7 +76,7 @@ public class CrossPlatformFileExchangeService {
                 .compressionAlgorithm(request.isCompressPackage() ? "GZIP" : "NONE")
                 .packageChecksum(calculatePackageChecksum(serializedFiles))
                 .lastModified(LocalDateTime.now())
-                .exportHistory(Arrays.asList("Exported on " + LocalDateTime.now()))
+                .exportHistory(List.of("Exported on " + LocalDateTime.now()))
                 .minRequiredVersion("1.0")
                 .supportedFormats(Arrays.asList("JPEG", "PNG", "MP4", "MP3", "WAV"))
                 .build();
@@ -195,7 +194,7 @@ public class CrossPlatformFileExchangeService {
                     throw FileException.fileCorrupted(fileData.getFileName());
                 }
         
-        String newFileName = UUID.randomUUID().toString() + getFileExtension(fileData.getFileName());
+        String newFileName = UUID.randomUUID() + getFileExtension(fileData.getFileName());
         
         Path uploadPath = Paths.get(uploadDir, fileData.getMediaType());
         if (!Files.exists(uploadPath)) {

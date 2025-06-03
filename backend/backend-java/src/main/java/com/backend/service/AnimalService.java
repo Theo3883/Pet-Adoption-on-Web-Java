@@ -107,7 +107,7 @@ public class AnimalService {
             log.error("Animal not found with ID: {}", animalId);
             throw com.backend.exception.ResourceNotFoundException.animalNotFound(animalId);
         }
-        
+
         if (feedingScheduleRequests != null && !feedingScheduleRequests.isEmpty()) {
             FeedingScheduleCreationRequest request = feedingScheduleRequests.getFirst();
             
@@ -115,9 +115,7 @@ public class AnimalService {
             log.info("Added feeding schedule for animal ID: {}", animalId);
         }
     }
-    
-    @Transactional
-    public void insertFeedingScheduleWithVArray(Long animalId, List<String> feedingTimes, String foodType, String notes) {
+      private void insertFeedingScheduleWithVArray(Long animalId, List<String> feedingTimes, String foodType, String notes) {
         if (feedingTimes == null || feedingTimes.isEmpty()) {
             log.warn("No feeding times provided for animal ID: {}", animalId);
             return;
@@ -153,7 +151,7 @@ public class AnimalService {
         }
         
         String sql = "INSERT INTO FeedingSchedule (animalID, feeding_time, food_type, notes) " +
-                     "VALUES (?, " + varrayConstructor.toString() + ", ?, ?)";
+                     "VALUES (?, " + varrayConstructor + ", ?, ?)";
         
         log.debug("Executing SQL: {}", sql);
         log.debug("Parameters: animalId={}, foodType={}, notes={}", animalId, foodType, notes);
@@ -167,11 +165,8 @@ public class AnimalService {
             int result = query.executeUpdate();
             log.info("Feeding schedule inserted successfully for animal ID: {}, rows affected: {}", animalId, result);        } catch (Exception e) {
             log.error("Error inserting feeding schedule for animal ID {}: {}", animalId, e.getMessage(), e);
-            throw new com.backend.exception.DatabaseException(
-                "DB_INSERT_FAILURE",
-                "Failed to save feeding schedule. Please try again.",
-                "Failed to insert feeding schedule for animal ID " + animalId + ": " + e.getMessage(),
-                e
+            throw com.backend.exception.DatabaseException.transactionFailure(
+                "Failed to insert feeding schedule for animal ID " + animalId + ": " + e.getMessage()
             );
         }
     }
@@ -326,7 +321,7 @@ public class AnimalService {
                 .collect(Collectors.toList()));
         
         if (!feedingScheduleData.isEmpty()) {
-            Object[] data = feedingScheduleData.get(0);
+            Object[] data = feedingScheduleData.getFirst();
             FeedingScheduleResponse feedingResponse = new FeedingScheduleResponse();
             feedingResponse.setId(((Number) data[0]).longValue());
             
@@ -336,7 +331,7 @@ public class AnimalService {
                         .map(String::trim)
                         .map(this::extractTimeFromTimestamp)
                         .filter(time -> !time.isEmpty())
-                        .collect(Collectors.toList());
+                        .toList();
                 feedingResponse.setFeedingTime(feedingTimes);
             } else {
                 feedingResponse.setFeedingTime(List.of());
