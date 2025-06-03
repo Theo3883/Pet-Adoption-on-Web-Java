@@ -16,38 +16,39 @@ import java.util.Map;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class NewsletterController {
-    
+
     private final NewsletterService newsletterService;
     private final JwtService jwtService;
-      
+
     @GetMapping("/newsletter/subscriptions")
     public ResponseEntity<List<Map<String, Object>>> getSubscriptions(HttpServletRequest httpRequest) {
         Long userId = extractUserIdFromToken(httpRequest);
         if (userId == null) {
             throw AuthenticationException.authenticationRequired();
         }
-        
+
         List<Map<String, Object>> subscriptions = newsletterService.getSubscriptions(userId);
         return ResponseEntity.ok(subscriptions);
     }
-      
+
     @PostMapping("/newsletter/update")
-    public ResponseEntity<Map<String, Boolean>> updateSubscriptions(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
+    public ResponseEntity<Map<String, Boolean>> updateSubscriptions(@RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         Long userId = extractUserIdFromToken(httpRequest);
         if (userId == null) {
             throw AuthenticationException.authenticationRequired();
         }
-        
+
         @SuppressWarnings("unchecked")
         List<String> species = (List<String>) request.get("species");
-        
+
         newsletterService.updateSubscriptions(userId, species);
-        
+
         Map<String, Boolean> response = new HashMap<>();
         response.put("success", true);
         return ResponseEntity.ok(response);
     }
-    
+
     private Long extractUserIdFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -60,4 +61,4 @@ public class NewsletterController {
         }
         return null;
     }
-} 
+}

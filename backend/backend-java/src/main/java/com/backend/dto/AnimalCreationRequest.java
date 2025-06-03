@@ -24,7 +24,7 @@ public class AnimalCreationRequest {
         private String foodType;
         private String notes;
         private List<String> feedingTimes;
-        
+
         public List<String> getFeedingTimes() {
             if (feedingTimes != null && !feedingTimes.isEmpty()) {
                 return feedingTimes;
@@ -55,4 +55,4 @@ public class AnimalCreationRequest {
     public static class RelationsCreationRequest {
         private String friendWith;
     }
-} 
+}

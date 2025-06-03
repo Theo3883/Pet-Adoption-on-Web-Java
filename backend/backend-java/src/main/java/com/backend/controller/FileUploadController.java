@@ -17,18 +17,18 @@ import java.util.Map;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class FileUploadController {
-    
+
     private final FileStorageService fileStorageService;
-      
+
     @PostMapping("/upload")
     public ResponseEntity<Map<String, Object>> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "mediaType", defaultValue = "photo") String mediaType) {
-        
+
         if (file.isEmpty()) {
             throw ValidationException.missingRequiredField("file");
         }
-        
+
         if ("photo".equals(mediaType)) {
             String contentType = file.getContentType();
             if (contentType != null) {
@@ -39,57 +39,57 @@ public class FileUploadController {
                 }
             }
         }
-        
+
         try {
             String filename = fileStorageService.storeFile(file, mediaType);
             String publicUrl = fileStorageService.getPublicUrl(mediaType, filename);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("filePath", publicUrl);
             response.put("filename", filename);
             response.put("mediaType", mediaType);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (IOException e) {
             throw FileException.fileUploadFailed(file.getOriginalFilename());
         }
     }
-    
+
     @GetMapping("/server/{mediaType}/{filename}")
     public ResponseEntity<?> getMedia(
             @PathVariable String mediaType,
             @PathVariable String filename) {
-        
+
         try {
             if (!fileStorageService.fileExists(mediaType, filename)) {
                 return ResponseEntity.notFound().build();
             }
-            
+
             byte[] fileContent = fileStorageService.loadFile(mediaType, filename);
             String contentType = fileStorageService.getContentType(filename);
-            
+
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_TYPE, contentType)
                     .header(HttpHeaders.CACHE_CONTROL, "max-age=31536000") // 1 year cache
                     .body(fileContent);
-                    
+
         } catch (IOException e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", "Error loading file: " + e.getMessage());
             return ResponseEntity.status(500).body(error);
         }
     }
-    
+
     @DeleteMapping("/server/{mediaType}/{filename}")
     public ResponseEntity<?> deleteMedia(
             @PathVariable String mediaType,
             @PathVariable String filename) {
-        
+
         try {
             boolean deleted = fileStorageService.deleteFile(mediaType, filename);
-            
+
             Map<String, Object> response = new HashMap<>();
             if (deleted) {
                 response.put("success", true);
@@ -100,11 +100,11 @@ public class FileUploadController {
                 response.put("message", "File not found");
                 return ResponseEntity.notFound().build();
             }
-            
+
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", "Error deleting file: " + e.getMessage());
             return ResponseEntity.status(500).body(error);
         }
     }
-} 
+}

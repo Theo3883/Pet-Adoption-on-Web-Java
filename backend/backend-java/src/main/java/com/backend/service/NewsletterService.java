@@ -13,19 +13,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class NewsletterService {
-    
+
     private final NewsletterRepository newsletterRepository;
     private final UserRepository userRepository;
-    
+
     public List<Map<String, Object>> getSubscriptions(Long userId) {
         List<Newsletter> subscriptions = newsletterRepository.findByUserUserId(userId);
-        
+
         return subscriptions.stream().map(newsletter -> {
             Map<String, Object> subscriptionMap = new HashMap<>();
             subscriptionMap.put("ID", newsletter.getId());
@@ -34,23 +33,24 @@ public class NewsletterService {
             subscriptionMap.put("ISACTIVE", newsletter.getIsActive() ? 1 : 0);
             subscriptionMap.put("SUBSCRIBEDAT", newsletter.getSubscribedAt());
             return subscriptionMap;
-        }).collect(Collectors.toList());
+        }).toList();
     }
-      public void updateSubscriptions(Long userId, List<String> speciesList) {
+
+    public void updateSubscriptions(Long userId, List<String> speciesList) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             throw ResourceNotFoundException.userNotFound(userId);
         }
-        
+
         User user = userOpt.get();
-        
+
         List<Newsletter> existingSubscriptions = newsletterRepository.findByUserUserId(userId);
         for (Newsletter existing : existingSubscriptions) {
             if (!speciesList.contains(existing.getSpecies())) {
                 newsletterRepository.delete(existing);
             }
         }
-        
+
         for (String species : speciesList) {
             if (!newsletterRepository.existsByUserUserIdAndSpecies(userId, species)) {
                 Newsletter newsletter = new Newsletter();
@@ -61,11 +61,11 @@ public class NewsletterService {
             }
         }
     }
-    
+
     public List<User> getSubscribersBySpecies(String species) {
         List<Newsletter> subscriptions = newsletterRepository.findActiveSubscribersBySpecies(species);
         return subscriptions.stream()
                 .map(Newsletter::getUser)
-                .collect(Collectors.toList());
+                .toList();
     }
-} 
+}

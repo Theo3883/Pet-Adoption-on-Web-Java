@@ -25,10 +25,11 @@ import java.util.concurrent.ExecutionException;
 public class MessageController {
     private final MessageService messageService;
     private final JwtService jwtService;
-    private final RealTimeMessageService realTimeMessageService;    
-    
+    private final RealTimeMessageService realTimeMessageService;
+
     @PostMapping("/messages/send")
-    public ResponseEntity<Map<String, Object>> sendMessage(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
+    public ResponseEntity<Map<String, Object>> sendMessage(@RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         Long senderId = extractUserIdFromToken(httpRequest);
         if (senderId == null) {
             throw AuthenticationException.authenticationRequired();
@@ -41,10 +42,10 @@ public class MessageController {
         Long receiverId = Long.valueOf(request.get("receiverId").toString());
         String content = (String) request.get("content");
 
-        if (receiverId == null || content == null) {
+        if (content == null) {
             throw ValidationException.missingRequiredField("receiverId or content");
         }
-        
+
         Long messageId = messageService.sendMessage(senderId, receiverId, content);
 
         Map<String, Object> messageData = new HashMap<>();
@@ -60,10 +61,11 @@ public class MessageController {
         response.put("messageId", messageId);
 
         return ResponseEntity.status(201).body(response);
-    }    
-    
+    }
+
     @PostMapping("/messages/conversation")
-    public ResponseEntity<List<Map<String, Object>>> getConversation(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
+    public ResponseEntity<List<Map<String, Object>>> getConversation(@RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         Long userId = extractUserIdFromToken(httpRequest);
         if (userId == null) {
             throw AuthenticationException.authenticationRequired();
@@ -75,14 +77,10 @@ public class MessageController {
 
         Long otherUserId = Long.valueOf(request.get("otherUserId").toString());
 
-        if (otherUserId == null) {
-            throw ValidationException.missingRequiredField("otherUserId");
-        }
-
         List<Map<String, Object>> messages = messageService.getConversation(userId, otherUserId);
         return ResponseEntity.ok(messages);
-    }   
-    
+    }
+
     @PostMapping("/messages/conversation/async")
     public ResponseEntity<List<Map<String, Object>>> getConversationAsync(@RequestBody Map<String, Object> request,
             HttpServletRequest httpRequest) {
@@ -108,12 +106,14 @@ public class MessageController {
             messageService.markAsReadAsync(userId, otherUserId);
 
             List<Map<String, Object>> messages = messagesFuture.get();
-            return ResponseEntity.ok(messages);        } catch (ExecutionException | InterruptedException e) {
+            return ResponseEntity.ok(messages);
+        } catch (ExecutionException | InterruptedException e) {
             log.error("Error getting conversation async", e);
-            throw ServiceException.externalServiceFailure("MessageService", "Failed to retrieve conversation asynchronously");
+            throw ServiceException.externalServiceFailure("MessageService",
+                    "Failed to retrieve conversation asynchronously");
         }
-    }    
-    
+    }
+
     @GetMapping("/messages/conversations")
     public ResponseEntity<List<Map<String, Object>>> getConversations(HttpServletRequest httpRequest) {
         Long userId = extractUserIdFromToken(httpRequest);
@@ -123,8 +123,8 @@ public class MessageController {
 
         List<Map<String, Object>> conversations = messageService.getConversations(userId);
         return ResponseEntity.ok(conversations);
-    }    
-    
+    }
+
     @GetMapping("/messages/conversations/async")
     public ResponseEntity<Map<String, Object>> getConversationsAsync(HttpServletRequest httpRequest) {
         Long userId = extractUserIdFromToken(httpRequest);
@@ -151,10 +151,11 @@ public class MessageController {
             return ResponseEntity.ok(response);
         } catch (ExecutionException | InterruptedException e) {
             log.error("Error getting conversations async for user", e);
-            throw ServiceException.externalServiceFailure("MessageService", "Failed to retrieve conversations asynchronously");
+            throw ServiceException.externalServiceFailure("MessageService",
+                    "Failed to retrieve conversations asynchronously");
         }
-    }    
-    
+    }
+
     @PostMapping("/messages/read")
     public ResponseEntity<Map<String, String>> markMessagesAsRead(@RequestBody Map<String, Object> request,
             HttpServletRequest httpRequest) {
@@ -169,17 +170,13 @@ public class MessageController {
 
         Long otherUserId = Long.valueOf(request.get("otherUserId").toString());
 
-        if (otherUserId == null) {
-            throw ValidationException.missingRequiredField("otherUserId");
-        }
-
         messageService.markAsReadAsync(userId, otherUserId);
 
         Map<String, String> response = new HashMap<>();
         response.put("message", "Messages marked as read");
         return ResponseEntity.ok(response);
-    }   
-    
+    }
+
     @GetMapping("/messages/unread-count")
     public ResponseEntity<Map<String, Long>> getUnreadCount(HttpServletRequest httpRequest) {
         Long userId = extractUserIdFromToken(httpRequest);
@@ -198,8 +195,8 @@ public class MessageController {
             log.error("Error getting unread count", e);
             throw ServiceException.externalServiceFailure("MessageService", "Failed to retrieve unread count");
         }
-    }    
-    
+    }
+
     @GetMapping("/messages/dashboard")
     public ResponseEntity<Map<String, Object>> getMessagesDashboard(HttpServletRequest httpRequest) {
         Long userId = extractUserIdFromToken(httpRequest);
@@ -245,10 +242,11 @@ public class MessageController {
             }
         }
         return null;
-    }    
-    
+    }
+
     @PostMapping("/messages/session/register")
-    public ResponseEntity<Map<String, String>> registerSession(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
+    public ResponseEntity<Map<String, String>> registerSession(@RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         Long userId = extractUserIdFromToken(httpRequest);
         if (userId == null) {
             throw AuthenticationException.authenticationRequired();
@@ -268,8 +266,8 @@ public class MessageController {
         Map<String, String> response = new HashMap<>();
         response.put("message", "Session registered successfully");
         return ResponseEntity.ok(response);
-    }    
-    
+    }
+
     @PostMapping("/messages/session/unregister")
     public ResponseEntity<Map<String, String>> unregisterSession(@RequestBody Map<String, Object> request,
             HttpServletRequest httpRequest) {
@@ -292,10 +290,11 @@ public class MessageController {
         Map<String, String> response = new HashMap<>();
         response.put("message", "Session unregistered successfully");
         return ResponseEntity.ok(response);
-    }    
-    
+    }
+
     @PostMapping("/messages/typing")
-    public ResponseEntity<Map<String, String>> handleTyping(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
+    public ResponseEntity<Map<String, String>> handleTyping(@RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         Long senderId = extractUserIdFromToken(httpRequest);
         if (senderId == null) {
             throw AuthenticationException.authenticationRequired();
@@ -308,7 +307,7 @@ public class MessageController {
         Long receiverId = Long.valueOf(request.get("receiverId").toString());
         Boolean isTyping = (Boolean) request.get("isTyping");
 
-        if (receiverId == null || isTyping == null) {
+        if (isTyping == null) {
             throw ValidationException.missingRequiredField("receiverId or isTyping");
         }
 
@@ -318,9 +317,10 @@ public class MessageController {
         response.put("message", "Typing indicator processed");
         return ResponseEntity.ok(response);
     }
-      
+
     @GetMapping("/messages/online-status/{userId}")
-    public ResponseEntity<Map<String, Object>> getOnlineStatus(@PathVariable Long userId, HttpServletRequest httpRequest) {
+    public ResponseEntity<Map<String, Object>> getOnlineStatus(@PathVariable Long userId,
+            HttpServletRequest httpRequest) {
         Long requesterId = extractUserIdFromToken(httpRequest);
         if (requesterId == null) {
             throw AuthenticationException.authenticationRequired();
@@ -332,7 +332,7 @@ public class MessageController {
 
         try {
             realTimeMessageService.cleanupInactiveSessionsAsync().get();
-            
+
             CompletableFuture<Boolean> onlineFuture = realTimeMessageService.isUserOnlineAsync(userId);
             Boolean isOnline = onlineFuture.get();
 
@@ -345,8 +345,8 @@ public class MessageController {
             log.error("Error getting online status", e);
             throw ServiceException.externalServiceFailure("RealTimeMessageService", "Failed to check online status");
         }
-    }   
-    
+    }
+
     @GetMapping("/messages/online-count")
     public ResponseEntity<Map<String, Object>> getOnlineUsersCount(HttpServletRequest httpRequest) {
         Long userId = extractUserIdFromToken(httpRequest);
@@ -356,7 +356,7 @@ public class MessageController {
 
         try {
             CompletableFuture<Integer> countFuture = realTimeMessageService.getOnlineUsersCountAsync();
-            Integer count = countFuture.get();            
+            Integer count = countFuture.get();
             Map<String, Object> response = new HashMap<>();
             response.put("onlineCount", count);
             return ResponseEntity.ok(response);
@@ -364,8 +364,8 @@ public class MessageController {
             log.error("Error getting online users count", e);
             throw ServiceException.externalServiceFailure("RealTimeMessageService", "Failed to get online users count");
         }
-    }   
-    
+    }
+
     @PostMapping("/messages/force-offline")
     public ResponseEntity<Map<String, Object>> forceUserOffline(HttpServletRequest httpRequest) {
         Long userId = extractUserIdFromToken(httpRequest);
@@ -374,10 +374,10 @@ public class MessageController {
         }
 
         log.info("Force offline request received for user: {}", userId);
-        
+
         realTimeMessageService.notifyUserOnlineStatusAsync(userId, false).join();
         realTimeMessageService.cleanupInactiveSessionsAsync().join();
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
         response.put("message", "User set to offline");

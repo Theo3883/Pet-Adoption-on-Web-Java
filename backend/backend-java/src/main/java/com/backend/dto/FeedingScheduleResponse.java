@@ -18,4 +18,4 @@ public class FeedingScheduleResponse {
     private String foodType;
     @JsonProperty("NOTES")
     private String notes;
-} 
+}

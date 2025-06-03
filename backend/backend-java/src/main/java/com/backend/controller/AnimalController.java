@@ -139,9 +139,9 @@ public class AnimalController {
             throw com.backend.exception.ValidationException.missingRequiredField("animalId");
         }
         
-        Long animalId;
+        long animalId;
         try {
-            animalId = Long.valueOf(request.get("animalId").toString());
+            animalId = Long.parseLong(request.get("animalId").toString());
         } catch (NumberFormatException e) {
             throw com.backend.exception.ValidationException.invalidFormat("animalId");
         }

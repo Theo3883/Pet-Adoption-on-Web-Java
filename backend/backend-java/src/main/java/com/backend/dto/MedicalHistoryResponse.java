@@ -12,16 +12,16 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class MedicalHistoryResponse {
     private Long id;
-    
+
     @JsonProperty("VETNUMBER")
     private String vetNumber;
-    
+
     @JsonProperty("RECORDDATE")
     private LocalDate recordDate;
-    
+
     @JsonProperty("DESCRIPTION")
     private String description;
-    
+
     @JsonProperty("FIRST_AID_NOTED")
     private String firstAidNoted;
-} 
+}

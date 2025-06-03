@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class RelationsResponse {
     private Long id;
-    
+
     @JsonProperty("FRIENDWITH")
     private String friendWith;
-} 
+}

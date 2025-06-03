@@ -8,8 +8,8 @@ import java.util.Optional;
 
 @Repository
 public interface RelationsRepository extends JpaRepository<Relations, Long> {
-    
+
     Optional<Relations> findByAnimalAnimalId(Long animalId);
-    
+
     void deleteByAnimalAnimalId(Long animalId);
-} 
+}

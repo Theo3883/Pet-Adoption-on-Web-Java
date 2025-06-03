@@ -13,25 +13,25 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MedicalHistory {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ID")
     private Long id;
-    
+
     @ManyToOne
     @JoinColumn(name = "ANIMALID", referencedColumnName = "ANIMALID")
     private Animal animal;
-    
+
     @Column(name = "VETNUMBER", length = 50)
     private String vetNumber;
-    
+
     @Column(name = "RECORDDATE")
     private LocalDate recordDate;
-    
+
     @Column(name = "DESCRIPTION", length = 4000)
     private String description;
-    
+
     @Column(name = "FIRST_AID_NOTED", length = 4000)
     private String firstAidNoted;
-} 
+}

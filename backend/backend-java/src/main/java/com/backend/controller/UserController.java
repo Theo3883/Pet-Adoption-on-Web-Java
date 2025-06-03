@@ -24,8 +24,8 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
-    private final JwtService jwtService;    
-    
+    private final JwtService jwtService;
+
     @PostMapping("/users/signup")
     public ResponseEntity<Map<String, Object>> signUp(@Valid @RequestBody UserSignupRequest request) {
         if (request.getFirstName() == null || request.getFirstName().trim().isEmpty()) {
@@ -53,8 +53,8 @@ public class UserController {
         response.put("message", "User and address created successfully");
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }    
-    
+    }
+
     @PostMapping("/users/login")
     public ResponseEntity<Map<String, String>> login(@Valid @RequestBody UserLoginRequest request) {
         if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
@@ -72,7 +72,7 @@ public class UserController {
 
         return ResponseEntity.ok(response);
     }
-    
+
     @GetMapping("/users/all/details")
     public ResponseEntity<List<UserResponse>> getAllUsersWithDetails(HttpServletRequest httpRequest) {
         String authHeader = httpRequest.getHeader("Authorization");
@@ -88,10 +88,11 @@ public class UserController {
 
         List<UserResponse> users = userService.getAllUsersWithDetails();
         return ResponseEntity.ok(users);
-    }    
-    
+    }
+
     @DeleteMapping("/users/delete")
-    public ResponseEntity<Map<String, String>> deleteUser(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
+    public ResponseEntity<Map<String, String>> deleteUser(@RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         String authHeader = httpRequest.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw AuthorizationException.adminRequired();

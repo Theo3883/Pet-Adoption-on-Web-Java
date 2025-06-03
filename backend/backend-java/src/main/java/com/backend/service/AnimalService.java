@@ -26,28 +26,29 @@ import java.util.ArrayList;
 @RequiredArgsConstructor
 @Slf4j
 public class AnimalService {
-    
+
     private final AnimalRepository animalRepository;
     private final UserService userService;
     private final MedicalHistoryRepository medicalHistoryRepository;
     private final FeedingScheduleRepository feedingScheduleRepository;
     private final RelationsRepository relationsRepository;
     private final MultiMediaRepository multiMediaRepository;
-    
+
     @PersistenceContext
     private EntityManager entityManager;
-      @Transactional
+
+    @Transactional
     public AnimalResponse createBasicAnimal(Long userId, AnimalRequest request) {
         log.info("Creating basic animal for userId: {}", userId);
-        
+
         Optional<User> userOpt = userService.findById(userId);
         if (userOpt.isEmpty()) {
             log.error("User not found with id: {}", userId);
             throw com.backend.exception.ResourceNotFoundException.userNotFound(userId);
         }
-        
+
         User user = userOpt.get();
-        
+
         Animal animal = new Animal();
         animal.setName(request.getName());
         animal.setBreed(request.getBreed());
@@ -56,24 +57,25 @@ public class AnimalService {
         animal.setGender(request.getGender());
         animal.setUser(user);
         animal.setViews(0);
-        
+
         Animal savedAnimal = animalRepository.save(animal);
         log.info("Animal created successfully with ID: {}", savedAnimal.getAnimalId());
-        
+
         return convertToAnimalResponse(savedAnimal);
     }
-      @Transactional
+
+    @Transactional
     public void addMedicalHistory(Long animalId, List<MedicalHistoryCreationRequest> medicalHistoryRequests) {
         log.info("Adding medical history for animalId: {}", animalId);
-        
+
         Optional<Animal> animalOpt = animalRepository.findById(animalId);
         if (animalOpt.isEmpty()) {
             log.error("Animal not found with ID: {}", animalId);
             throw com.backend.exception.ResourceNotFoundException.animalNotFound(animalId);
         }
-        
+
         Animal animal = animalOpt.get();
-        
+
         if (medicalHistoryRequests != null && !medicalHistoryRequests.isEmpty()) {
             for (MedicalHistoryCreationRequest request : medicalHistoryRequests) {
                 MedicalHistory medicalHistory = new MedicalHistory();
@@ -81,7 +83,7 @@ public class AnimalService {
                 medicalHistory.setVetNumber(request.getVetNumber());
                 medicalHistory.setDescription(request.getDescription());
                 medicalHistory.setFirstAidNoted(request.getFirst_aid_noted());
-                
+
                 if (request.getRecordDate() != null && !request.getRecordDate().isEmpty()) {
                     try {
                         medicalHistory.setRecordDate(LocalDate.parse(request.getRecordDate()));
@@ -92,16 +94,17 @@ public class AnimalService {
                 } else {
                     medicalHistory.setRecordDate(LocalDate.now());
                 }
-                
+
                 medicalHistoryRepository.save(medicalHistory);
             }
             log.info("Added {} medical history records for animal ID: {}", medicalHistoryRequests.size(), animalId);
         }
     }
-      @Transactional
+
+    @Transactional
     public void addFeedingSchedule(Long animalId, List<FeedingScheduleCreationRequest> feedingScheduleRequests) {
         log.info("Adding feeding schedule for animalId: {}", animalId);
-        
+
         Optional<Animal> animalOpt = animalRepository.findById(animalId);
         if (animalOpt.isEmpty()) {
             log.error("Animal not found with ID: {}", animalId);
@@ -110,30 +113,33 @@ public class AnimalService {
 
         if (feedingScheduleRequests != null && !feedingScheduleRequests.isEmpty()) {
             FeedingScheduleCreationRequest request = feedingScheduleRequests.getFirst();
-            
-            insertFeedingScheduleWithVArray(animalId, request.getFeedingTimes(), request.getFoodType(), request.getNotes());
+
+            insertFeedingScheduleWithVArray(animalId, request.getFeedingTimes(), request.getFoodType(),
+                    request.getNotes());
             log.info("Added feeding schedule for animal ID: {}", animalId);
         }
     }
-      private void insertFeedingScheduleWithVArray(Long animalId, List<String> feedingTimes, String foodType, String notes) {
+
+    private void insertFeedingScheduleWithVArray(Long animalId, List<String> feedingTimes, String foodType,
+            String notes) {
         if (feedingTimes == null || feedingTimes.isEmpty()) {
             log.warn("No feeding times provided for animal ID: {}", animalId);
             return;
         }
-          Optional<Animal> animalOpt = animalRepository.findById(animalId);
+        Optional<Animal> animalOpt = animalRepository.findById(animalId);
         if (animalOpt.isEmpty()) {
             log.error("Animal not found with ID: {}", animalId);
             throw com.backend.exception.ResourceNotFoundException.animalNotFound(animalId);
         }
-        
+
         StringBuilder varrayConstructor = new StringBuilder("feeding_time_array(");
         boolean hasValidTimes = false;
-        
-        for (int i = 0; i < feedingTimes.size() && i < 10; i++) { 
+
+        for (int i = 0; i < feedingTimes.size() && i < 10; i++) {
             String timeStr = feedingTimes.get(i);
-            
+
             String formattedTime = normalizeTimeFormat(timeStr);
-            
+
             if (formattedTime != null && !formattedTime.isEmpty()) {
                 if (hasValidTimes) {
                     varrayConstructor.append(", ");
@@ -142,80 +148,81 @@ public class AnimalService {
                 hasValidTimes = true;
             }
         }
-        
+
         varrayConstructor.append(")");
-        
+
         if (!hasValidTimes) {
             log.warn("No valid feeding times found for animal ID: {}", animalId);
             return;
         }
-        
+
         String sql = "INSERT INTO FeedingSchedule (animalID, feeding_time, food_type, notes) " +
-                     "VALUES (?, " + varrayConstructor + ", ?, ?)";
-        
+                "VALUES (?, " + varrayConstructor + ", ?, ?)";
+
         log.debug("Executing SQL: {}", sql);
         log.debug("Parameters: animalId={}, foodType={}, notes={}", animalId, foodType, notes);
-        
+
         try {
             Query query = entityManager.createNativeQuery(sql);
             query.setParameter(1, animalId);
             query.setParameter(2, foodType);
             query.setParameter(3, notes);
-            
+
             int result = query.executeUpdate();
-            log.info("Feeding schedule inserted successfully for animal ID: {}, rows affected: {}", animalId, result);        } catch (Exception e) {
+            log.info("Feeding schedule inserted successfully for animal ID: {}, rows affected: {}", animalId, result);
+        } catch (Exception e) {
             log.error("Error inserting feeding schedule for animal ID {}: {}", animalId, e.getMessage(), e);
             throw com.backend.exception.DatabaseException.transactionFailure(
-                "Failed to insert feeding schedule for animal ID " + animalId + ": " + e.getMessage()
-            );
+                    "Failed to insert feeding schedule for animal ID " + animalId + ": " + e.getMessage());
         }
     }
-    
+
     private String normalizeTimeFormat(String timeStr) {
         if (timeStr == null || timeStr.trim().isEmpty()) {
             return null;
         }
-        
+
         timeStr = timeStr.trim();
-        
+
         // If already in HH:MM:SS format, validate and return
         if (timeStr.matches("\\d{1,2}:\\d{2}:\\d{2}")) {
             return timeStr;
         }
-        
+
         // If in HH:MM format, convert to HH:MM:SS
         if (timeStr.matches("\\d{1,2}:\\d{2}")) {
             return timeStr + ":00";
         }
-        
+
         // Invalid format
         return null;
     }
-      @Transactional
+
+    @Transactional
     public void addMultimedia(Long animalId, List<MultimediaCreationRequest> multimediaRequests) {
         log.debug("Adding multimedia for animalId: {}", animalId);
         log.debug("Multimedia requests count: {}", multimediaRequests != null ? multimediaRequests.size() : 0);
-        
+
         Optional<Animal> animalOpt = animalRepository.findById(animalId);
         if (animalOpt.isEmpty()) {
             log.error("Animal not found with ID: {}", animalId);
             throw com.backend.exception.ResourceNotFoundException.animalNotFound(animalId);
         }
-        
+
         Animal animal = animalOpt.get();
         log.debug("Found animal: {}", animal.getName());
-        
+
         if (multimediaRequests != null && !multimediaRequests.isEmpty()) {
             for (MultimediaCreationRequest request : multimediaRequests) {
-                log.debug("Processing multimedia: mediaType={}, url={}, description={}", 
-                         request.getMediaType(), request.getUrl(), request.getDescription());
-                
+                log.debug("Processing multimedia: mediaType={}, url={}, description={}",
+                        request.getMediaType(), request.getUrl(), request.getDescription());
+
                 MultiMedia multiMedia = new MultiMedia();
                 multiMedia.setAnimal(animal);
                 multiMedia.setUrl(request.getUrl());
                 multiMedia.setDescription(request.getDescription());
                 multiMedia.setUploadDate(LocalDate.now());
-                
+
                 try {
                     multiMedia.setMedia(MultiMedia.MediaType.valueOf(request.getMediaType().toLowerCase()));
                     log.debug("Set media type: {}", request.getMediaType());
@@ -223,7 +230,7 @@ public class AnimalService {
                     log.warn("Invalid media type: {}, defaulting to photo", request.getMediaType());
                     multiMedia.setMedia(MultiMedia.MediaType.photo);
                 }
-                
+
                 MultiMedia saved = multiMediaRepository.save(multiMedia);
                 log.debug("Saved multimedia with ID: {}", saved.getId());
             }
@@ -232,25 +239,27 @@ public class AnimalService {
             log.debug("No multimedia data to add for animal ID: {}", animalId);
         }
     }
-      @Transactional
+
+    @Transactional
     public void addRelations(Long animalId, RelationsCreationRequest relationsRequest) {
         log.debug("Adding relations for animalId: {}", animalId);
         log.debug("Relations request: {}", relationsRequest != null ? relationsRequest.getFriendWith() : "null");
-        
+
         Optional<Animal> animalOpt = animalRepository.findById(animalId);
         if (animalOpt.isEmpty()) {
             log.error("Animal not found with ID: {}", animalId);
             throw com.backend.exception.ResourceNotFoundException.animalNotFound(animalId);
         }
-        
+
         Animal animal = animalOpt.get();
         log.debug("Found animal: {}", animal.getName());
-        
-        if (relationsRequest != null && relationsRequest.getFriendWith() != null && !relationsRequest.getFriendWith().isEmpty()) {
+
+        if (relationsRequest != null && relationsRequest.getFriendWith() != null
+                && !relationsRequest.getFriendWith().isEmpty()) {
             Relations relations = new Relations();
             relations.setAnimal(animal);
             relations.setFriendWith(relationsRequest.getFriendWith());
-            
+
             Relations saved = relationsRepository.save(relations);
             log.info("Added relations with ID: {} for animal ID: {}", saved.getId(), animalId);
         } else {
@@ -264,39 +273,40 @@ public class AnimalService {
                 .map(this::convertToAnimalResponse)
                 .collect(Collectors.toList());
     }
-    
+
     public Optional<AnimalResponse> getAnimalById(Long animalId) {
         return animalRepository.findById(animalId)
                 .map(this::convertToAnimalResponse);
     }
-    
+
     public Optional<AnimalDetailResponse> getAnimalDetailById(Long animalId) {
         Optional<Animal> animalOpt = animalRepository.findById(animalId);
         if (animalOpt.isEmpty()) {
             return Optional.empty();
         }
-        
+
         Animal animal = animalOpt.get();
-        
+
         List<MultiMedia> multimedia = multiMediaRepository.findByAnimalAnimalId(animalId);
         List<MedicalHistory> medicalHistories = medicalHistoryRepository.findByAnimalAnimalId(animalId);
-        
+
         List<Object[]> feedingScheduleData = List.of();
         try {
             feedingScheduleData = feedingScheduleRepository.findFeedingScheduleWithExtractedTimes(animalId);
         } catch (Exception e) {
-            log.warn("Failed to retrieve feeding schedule with VARRAY extraction for animal {}, using fallback", animalId);
+            log.warn("Failed to retrieve feeding schedule with VARRAY extraction for animal {}, using fallback",
+                    animalId);
             try {
                 Optional<FeedingSchedule> feedingScheduleOpt = feedingScheduleRepository.findByAnimalAnimalId(animalId);
                 if (feedingScheduleOpt.isPresent()) {
                     FeedingSchedule fs = feedingScheduleOpt.get();
 
-                    Object[] mockData = new Object[]{
-                        fs.getId(),
-                        animalId,
-                        fs.getFeedingTime(),
-                        fs.getFoodType(),
-                        fs.getNotes()
+                    Object[] mockData = new Object[] {
+                            fs.getId(),
+                            animalId,
+                            fs.getFeedingTime(),
+                            fs.getFoodType(),
+                            fs.getNotes()
                     };
                     feedingScheduleData = new ArrayList<>();
                     feedingScheduleData.add(mockData);
@@ -306,25 +316,25 @@ public class AnimalService {
                 feedingScheduleData = List.of();
             }
         }
-        
+
         Optional<Relations> relations = relationsRepository.findByAnimalAnimalId(animalId);
-        
+
         AnimalDetailResponse response = new AnimalDetailResponse();
         response.setAnimal(convertToAnimalResponse(animal));
-        
+
         response.setMultimedia(multimedia.stream()
                 .map(this::convertToMultiMediaResponse)
                 .collect(Collectors.toList()));
-        
+
         response.setMedicalHistory(medicalHistories.stream()
                 .map(this::convertToMedicalHistoryResponse)
                 .collect(Collectors.toList()));
-        
+
         if (!feedingScheduleData.isEmpty()) {
             Object[] data = feedingScheduleData.getFirst();
             FeedingScheduleResponse feedingResponse = new FeedingScheduleResponse();
             feedingResponse.setId(((Number) data[0]).longValue());
-            
+
             String feedingTimesString = (String) data[2];
             if (feedingTimesString != null && !feedingTimesString.isEmpty()) {
                 List<String> feedingTimes = Arrays.stream(feedingTimesString.split(","))
@@ -336,22 +346,22 @@ public class AnimalService {
             } else {
                 feedingResponse.setFeedingTime(List.of());
             }
-            
+
             feedingResponse.setFoodType((String) data[3]);
             feedingResponse.setNotes((String) data[4]);
-            
+
             response.setFeedingSchedule(List.of(feedingResponse));
         } else {
             response.setFeedingSchedule(List.of());
         }
-        
+
         if (relations.isPresent()) {
             List<RelationsResponse> relationsList = List.of(convertToRelationsResponse(relations.get()));
             response.setRelations(relationsList);
         } else {
             response.setRelations(List.of());
         }
-        
+
         if (animal.getUser() != null) {
             response.setOwner(convertToUserResponse(animal.getUser()));
             if (animal.getUser().getAddress() != null) {
@@ -362,44 +372,45 @@ public class AnimalService {
                 response.setAddress(List.of());
             }
         }
-        
+
         return Optional.of(response);
     }
-    
+
     public List<AnimalResponse> getAnimalsBySpecies(String species) {
         return animalRepository.findBySpecies(species)
                 .stream()
                 .map(this::convertToAnimalResponse)
                 .collect(Collectors.toList());
     }
-    
+
     public void incrementViews(Long animalId) {
         animalRepository.incrementViews(animalId);
     }
-      public void deleteAnimal(Long animalId) {
+
+    public void deleteAnimal(Long animalId) {
         if (!animalRepository.existsById(animalId)) {
             throw com.backend.exception.ResourceNotFoundException.animalNotFound(animalId);
         }
         animalRepository.deleteById(animalId);
     }
-    
+
     public List<AnimalResponse> getTopAnimalsByUserCity(Long userId) {
         Optional<User> userOpt = userService.findById(userId);
         if (userOpt.isEmpty() || userOpt.get().getAddress() == null) {
             return List.of();
         }
-        
+
         String city = userOpt.get().getAddress().getCity();
         return animalRepository.findTopAnimalsByCity(city)
                 .stream()
                 .map(this::convertToAnimalResponse)
                 .collect(Collectors.toList());
     }
-    
+
     public List<Object[]> getPopularBreedsBySpecies(String species) {
         return animalRepository.findPopularBreedsBySpecies(species);
     }
-    
+
     private AnimalResponse convertToAnimalResponse(Animal animal) {
         AnimalResponse response = new AnimalResponse();
         response.setAnimalId(animal.getAnimalId());
@@ -410,7 +421,7 @@ public class AnimalService {
         response.setViews(animal.getViews());
         response.setGender(animal.getGender());
         response.setCreatedAt(animal.getCreatedAt());
-        
+
         if (animal.getUser() != null) {
             response.setUserId(animal.getUser().getUserId());
             response.setUser(convertToUserResponse(animal.getUser()));
@@ -422,10 +433,10 @@ public class AnimalService {
                     .collect(Collectors.toList());
             response.setMultimedia(multimediaResponses);
         }
-        
+
         return response;
     }
-    
+
     private UserResponse convertToUserResponse(User user) {
         UserResponse userResponse = new UserResponse();
         userResponse.setUserId(user.getUserId());
@@ -436,7 +447,7 @@ public class AnimalService {
         userResponse.setCreatedAt(user.getCreatedAt());
         return userResponse;
     }
-    
+
     private AddressResponse convertToAddressResponse(Address address) {
         AddressResponse response = new AddressResponse();
         response.setAddressId(address.getAddressId());
@@ -447,7 +458,7 @@ public class AnimalService {
         response.setCountry(address.getCountry());
         return response;
     }
-    
+
     private MultiMediaResponse convertToMultiMediaResponse(MultiMedia multiMedia) {
         MultiMediaResponse response = new MultiMediaResponse();
         response.setId(multiMedia.getId());
@@ -457,7 +468,7 @@ public class AnimalService {
         response.setUploadDate(multiMedia.getUploadDate());
         return response;
     }
-    
+
     private MedicalHistoryResponse convertToMedicalHistoryResponse(MedicalHistory medicalHistory) {
         MedicalHistoryResponse response = new MedicalHistoryResponse();
         response.setId(medicalHistory.getId());
@@ -467,23 +478,23 @@ public class AnimalService {
         response.setFirstAidNoted(medicalHistory.getFirstAidNoted());
         return response;
     }
-    
+
     private RelationsResponse convertToRelationsResponse(Relations relations) {
         RelationsResponse response = new RelationsResponse();
         response.setId(relations.getId());
         response.setFriendWith(relations.getFriendWith());
         return response;
     }
-    
+
     private String extractTimeFromTimestamp(String timestampOrTime) {
         if (timestampOrTime == null || timestampOrTime.isEmpty()) {
             return "";
         }
-        
+
         if (timestampOrTime.matches("\\d{1,2}:\\d{2}:\\d{2}")) {
             return timestampOrTime;
         }
-        
+
         // Handle Oracle timestamp format: "01/05/25 07:30:00.000000000"
         if (timestampOrTime.contains(" ")) {
             String[] parts = timestampOrTime.split(" ");
@@ -498,12 +509,12 @@ public class AnimalService {
                 }
             }
         }
-        
+
         String timePattern = timestampOrTime.replaceAll(".*?(\\d{1,2}:\\d{2}:\\d{2}).*", "$1");
         if (timePattern.matches("\\d{1,2}:\\d{2}:\\d{2}")) {
             return timePattern;
         }
-        
-        return timestampOrTime; 
+
+        return timestampOrTime;
     }
-} 
+}

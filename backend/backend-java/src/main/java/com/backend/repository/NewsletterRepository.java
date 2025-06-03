@@ -10,15 +10,15 @@ import java.util.List;
 
 @Repository
 public interface NewsletterRepository extends JpaRepository<Newsletter, Long> {
-    
+
     List<Newsletter> findByUserUserId(Long userId);
-    
+
     @Query("SELECT n FROM Newsletter n " +
-           "JOIN n.user u " +
-           "WHERE n.species = :species AND n.isActive = true")
+            "JOIN n.user u " +
+            "WHERE n.species = :species AND n.isActive = true")
     List<Newsletter> findActiveSubscribersBySpecies(@Param("species") String species);
-    
+
     void deleteByUserUserIdAndSpecies(Long userId, String species);
-    
+
     boolean existsByUserUserIdAndSpecies(Long userId, String species);
-} 
+}

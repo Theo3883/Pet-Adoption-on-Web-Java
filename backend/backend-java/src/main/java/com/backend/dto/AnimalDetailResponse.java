@@ -17,4 +17,4 @@ public class AnimalDetailResponse {
     private UserResponse owner;
     private List<AddressResponse> address;
     private List<RelationsResponse> relations;
-} 
+}

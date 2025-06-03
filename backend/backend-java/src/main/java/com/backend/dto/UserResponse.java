@@ -6,18 +6,18 @@ import java.time.LocalDateTime;
 
 @Data
 public class UserResponse {
-    
+
     @JsonProperty("USERID")
     private Long userId;
-    
+
     @JsonProperty("FIRSTNAME")
     private String firstName;
-    
+
     @JsonProperty("LASTNAME")
     private String lastName;
-    
+
     private String email;
     private String phone;
     private LocalDateTime createdAt;
     private AddressResponse address;
-} 
+}

@@ -26,33 +26,35 @@ import java.util.concurrent.CompletionException;
 @EnableAsync
 @Slf4j
 public class MessageService {
-      private final MessageRepository messageRepository;
+    private final MessageRepository messageRepository;
     private final UserRepository userRepository;
-      public Long sendMessage(Long senderId, Long receiverId, String content) {
+
+    public Long sendMessage(Long senderId, Long receiverId, String content) {
         Optional<User> sender = userRepository.findById(senderId);
         Optional<User> receiver = userRepository.findById(receiverId);
-        
+
         if (sender.isEmpty()) {
             throw ResourceNotFoundException.userNotFound(senderId);
         }
         if (receiver.isEmpty()) {
             throw ResourceNotFoundException.userNotFound(receiverId);
         }
-        
+
         Message message = new Message();
         message.setSender(sender.get());
         message.setReceiver(receiver.get());
         message.setContent(content);
         message.setTimestamp(LocalDateTime.now());
         message.setIsRead(false);
-        
+
         Message savedMessage = messageRepository.save(message);
-        processMessageAsync(savedMessage.getMessageId(), senderId, receiverId);
-        
+        this.processMessageAsync(savedMessage.getMessageId());
+
         return savedMessage.getMessageId();
     }
+
     @Async("messageThreadPoolTaskExecutor")
-    public void processMessageAsync(Long messageId, Long senderId, Long receiverId) {
+    public void processMessageAsync(Long messageId) {
         CompletableFuture.runAsync(() -> {
             try {
                 log.info("Message processing completed for message {}", messageId);
@@ -62,12 +64,12 @@ public class MessageService {
             }
         });
     }
-    
+
     public CompletableFuture<List<Map<String, Object>>> getConversationAsync(Long userId, Long otherUserId) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 List<Message> messages = messageRepository.findConversation(userId, otherUserId);
-                
+
                 return messages.parallelStream().map(message -> {
                     Map<String, Object> messageMap = new HashMap<>();
                     messageMap.put("MESSAGEID", message.getMessageId());
@@ -75,13 +77,13 @@ public class MessageService {
                     messageMap.put("RECEIVERID", message.getReceiver().getUserId());
                     messageMap.put("CONTENT", message.getContent());
                     messageMap.put("TIMESTAMP", message.getTimestamp());
-                    messageMap.put("ISREAD", message.getIsRead() ? 1 : 0);
-                    
+                    messageMap.put("ISREAD", message.getIsRead().booleanValue() ? 1 : 0);
+
                     messageMap.put("SENDERFIRSTNAME", message.getSender().getFirstName());
                     messageMap.put("SENDERLASTNAME", message.getSender().getLastName());
                     messageMap.put("RECEIVERFIRSTNAME", message.getReceiver().getFirstName());
                     messageMap.put("RECEIVERLASTNAME", message.getReceiver().getLastName());
-                    
+
                     return messageMap;
                 }).toList();
             } catch (Exception e) {
@@ -90,10 +92,10 @@ public class MessageService {
             }
         });
     }
-    
+
     public List<Map<String, Object>> getConversation(Long userId, Long otherUserId) {
         List<Message> messages = messageRepository.findConversation(userId, otherUserId);
-        
+
         return messages.stream().map(message -> {
             Map<String, Object> messageMap = new HashMap<>();
             messageMap.put("MESSAGEID", message.getMessageId());
@@ -101,53 +103,54 @@ public class MessageService {
             messageMap.put("RECEIVERID", message.getReceiver().getUserId());
             messageMap.put("CONTENT", message.getContent());
             messageMap.put("TIMESTAMP", message.getTimestamp());
-            messageMap.put("ISREAD", message.getIsRead() ? 1 : 0);
-            
+            messageMap.put("ISREAD", message.getIsRead().booleanValue() ? 1 : 0);
+
             messageMap.put("SENDERFIRSTNAME", message.getSender().getFirstName());
             messageMap.put("SENDERLASTNAME", message.getSender().getLastName());
             messageMap.put("RECEIVERFIRSTNAME", message.getReceiver().getFirstName());
             messageMap.put("RECEIVERLASTNAME", message.getReceiver().getLastName());
-            
+
             return messageMap;
         }).toList();
     }
-    
+
+    private Map<String, Object> createConversationMap(User otherUser, LocalDateTime lastMessageTime) {
+        Map<String, Object> conversation = new HashMap<>();
+        conversation.put("OTHERUSERID", otherUser.getUserId());
+        conversation.put("OTHERUSERNAME", otherUser.getFirstName() + " " + otherUser.getLastName());
+        conversation.put("FIRSTNAME", otherUser.getFirstName());
+        conversation.put("LASTNAME", otherUser.getLastName());
+        conversation.put("EMAIL", otherUser.getEmail());
+        conversation.put("LASTMESSAGETIME", lastMessageTime);
+        return conversation;
+    }
+
     public CompletableFuture<List<Map<String, Object>>> getConversationsAsync(Long userId) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                CompletableFuture<List<Object[]>> senderFuture = CompletableFuture.supplyAsync(() -> 
-                    messageRepository.findConversationsAsSender(userId));
-                CompletableFuture<List<Object[]>> receiverFuture = CompletableFuture.supplyAsync(() -> 
-                    messageRepository.findConversationsAsReceiver(userId));
+                CompletableFuture<List<Object[]>> senderFuture = CompletableFuture
+                        .supplyAsync(() -> messageRepository.findConversationsAsSender(userId));
+                CompletableFuture<List<Object[]>> receiverFuture = CompletableFuture
+                        .supplyAsync(() -> messageRepository.findConversationsAsReceiver(userId));
 
                 CompletableFuture.allOf(senderFuture, receiverFuture).join();
-                
+
                 List<Object[]> senderResults = senderFuture.join();
                 List<Object[]> receiverResults = receiverFuture.join();
-                
+
                 Map<Long, Map<String, Object>> conversationMap = new HashMap<>();
-                
                 senderResults.parallelStream().forEach(result -> {
                     User otherUser = (User) result[0];
                     LocalDateTime lastMessageTime = (LocalDateTime) result[1];
-                    
+
                     synchronized (conversationMap) {
-                        Map<String, Object> conversation = new HashMap<>();
-                        conversation.put("OTHERUSERID", otherUser.getUserId());
-                        conversation.put("OTHERUSERNAME", otherUser.getFirstName() + " " + otherUser.getLastName());
-                        conversation.put("FIRSTNAME", otherUser.getFirstName());
-                        conversation.put("LASTNAME", otherUser.getLastName());
-                        conversation.put("EMAIL", otherUser.getEmail());
-                        conversation.put("LASTMESSAGETIME", lastMessageTime);
-                        
-                        conversationMap.put(otherUser.getUserId(), conversation);
+                        conversationMap.put(otherUser.getUserId(), createConversationMap(otherUser, lastMessageTime));
                     }
                 });
-                
                 receiverResults.parallelStream().forEach(result -> {
                     User otherUser = (User) result[0];
                     LocalDateTime lastMessageTime = (LocalDateTime) result[1];
-                    
+
                     synchronized (conversationMap) {
                         if (conversationMap.containsKey(otherUser.getUserId())) {
                             Map<String, Object> existing = conversationMap.get(otherUser.getUserId());
@@ -156,56 +159,40 @@ public class MessageService {
                                 existing.put("LASTMESSAGETIME", lastMessageTime);
                             }
                         } else {
-                            Map<String, Object> conversation = new HashMap<>();
-                            conversation.put("OTHERUSERID", otherUser.getUserId());
-                            conversation.put("OTHERUSERNAME", otherUser.getFirstName() + " " + otherUser.getLastName());
-                            conversation.put("FIRSTNAME", otherUser.getFirstName());
-                            conversation.put("LASTNAME", otherUser.getLastName());
-                            conversation.put("EMAIL", otherUser.getEmail());
-                            conversation.put("LASTMESSAGETIME", lastMessageTime);
-                            
-                            conversationMap.put(otherUser.getUserId(), conversation);
+                            conversationMap.put(otherUser.getUserId(),
+                                    createConversationMap(otherUser, lastMessageTime));
                         }
                     }
                 });
-                
+
                 return conversationMap.values().stream()
                         .sorted((a, b) -> ((LocalDateTime) b.get("LASTMESSAGETIME"))
                                 .compareTo((LocalDateTime) a.get("LASTMESSAGETIME")))
-                                .toList();
-                        
+                        .toList();
+
             } catch (Exception e) {
                 log.error("Error loading conversations for user {}", userId, e);
                 throw new CompletionException(e);
             }
         });
     }
-    
+
     public List<Map<String, Object>> getConversations(Long userId) {
         List<Object[]> senderResults = messageRepository.findConversationsAsSender(userId);
         List<Object[]> receiverResults = messageRepository.findConversationsAsReceiver(userId);
-    
+
         Map<Long, Map<String, Object>> conversationMap = new HashMap<>();
-        
         for (Object[] result : senderResults) {
             User otherUser = (User) result[0];
             LocalDateTime lastMessageTime = (LocalDateTime) result[1];
-            
-            Map<String, Object> conversation = new HashMap<>();
-            conversation.put("OTHERUSERID", otherUser.getUserId());
-            conversation.put("OTHERUSERNAME", otherUser.getFirstName() + " " + otherUser.getLastName());
-            conversation.put("FIRSTNAME", otherUser.getFirstName());
-            conversation.put("LASTNAME", otherUser.getLastName());
-            conversation.put("EMAIL", otherUser.getEmail());
-            conversation.put("LASTMESSAGETIME", lastMessageTime);
-            
-            conversationMap.put(otherUser.getUserId(), conversation);
+
+            conversationMap.put(otherUser.getUserId(), createConversationMap(otherUser, lastMessageTime));
         }
-        
+
         for (Object[] result : receiverResults) {
             User otherUser = (User) result[0];
             LocalDateTime lastMessageTime = (LocalDateTime) result[1];
-            
+
             if (conversationMap.containsKey(otherUser.getUserId())) {
                 Map<String, Object> existing = conversationMap.get(otherUser.getUserId());
                 LocalDateTime existingTime = (LocalDateTime) existing.get("LASTMESSAGETIME");
@@ -220,17 +207,17 @@ public class MessageService {
                 conversation.put("LASTNAME", otherUser.getLastName());
                 conversation.put("EMAIL", otherUser.getEmail());
                 conversation.put("LASTMESSAGETIME", lastMessageTime);
-                
+
                 conversationMap.put(otherUser.getUserId(), conversation);
             }
         }
-        
+
         return conversationMap.values().stream()
                 .sorted((a, b) -> ((LocalDateTime) b.get("LASTMESSAGETIME"))
                         .compareTo((LocalDateTime) a.get("LASTMESSAGETIME")))
                 .toList();
     }
-    
+
     @Async("messageThreadPoolTaskExecutor")
     public void markAsReadAsync(Long userId, Long otherUserId) {
         CompletableFuture.runAsync(() -> {
@@ -243,11 +230,11 @@ public class MessageService {
             }
         });
     }
-    
+
     public void markAsRead(Long userId, Long otherUserId) {
         messageRepository.markAsRead(userId, otherUserId);
     }
-    
+
     @Async("messageThreadPoolTaskExecutor")
     public CompletableFuture<Long> getUnreadCountAsync(Long userId) {
         return CompletableFuture.supplyAsync(() -> {
@@ -261,7 +248,7 @@ public class MessageService {
             }
         });
     }
-    
+
     public Long getUnreadCount(Long userId) {
         return messageRepository.countUnreadMessages(userId);
     }

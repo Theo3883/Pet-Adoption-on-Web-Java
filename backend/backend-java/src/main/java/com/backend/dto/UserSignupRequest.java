@@ -4,14 +4,14 @@ import lombok.Data;
 
 @Data
 public class UserSignupRequest {
-    
+
     private String firstName;
     private String lastName;
     private String email;
     private String password;
     private String phone;
     private AddressRequest address;
-    
+
     @Data
     public static class AddressRequest {
         private String street;
@@ -20,4 +20,4 @@ public class UserSignupRequest {
         private String zipCode;
         private String country;
     }
-} 
+}

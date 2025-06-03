@@ -37,8 +37,8 @@ public class RealTimeMessageService {
     }
 
     @Async("messageThreadPoolTaskExecutor")
-    public CompletableFuture<Void> unregisterUserSessionAsync(String sessionId) {
-        return CompletableFuture.runAsync(() -> {
+    public void unregisterUserSessionAsync(String sessionId) {
+        CompletableFuture.runAsync(() -> {
             try {
                 Long userId = sessionUserMap.remove(sessionId);
                 if (userId != null) {
@@ -63,8 +63,8 @@ public class RealTimeMessageService {
     }
 
     @Async("messageThreadPoolTaskExecutor")
-    public CompletableFuture<Void> sendRealTimeNotificationAsync(Long userId, Object messageData) {
-        return CompletableFuture.runAsync(() -> {
+    public void sendRealTimeNotificationAsync(Long userId, Object messageData) {
+        CompletableFuture.runAsync(() -> {
             try {
                 CopyOnWriteArrayList<String> userSessions = activeUserSessions.get(userId);
                 if (userSessions != null && !userSessions.isEmpty()) {
@@ -87,13 +87,13 @@ public class RealTimeMessageService {
             }
         });
     }
-    
+
     @Async("generalThreadPoolTaskExecutor")
     public CompletableFuture<Void> notifyUserOnlineStatusAsync(Long userId, boolean isOnline) {
         return CompletableFuture.runAsync(() -> {
             try {
                 log.info("User {} is now {}", userId, isOnline ? "online" : "offline");
-                
+
                 if (!isOnline) {
                     activeUserSessions.remove(userId);
                     CopyOnWriteArrayList<String> userSessions = new CopyOnWriteArrayList<>();
@@ -104,9 +104,9 @@ public class RealTimeMessageService {
                         }
                         return false;
                     });
-                    
+
                     log.debug("Removed {} lingering sessions for user {}", userSessions.size(), userId);
-                } else if (isOnline) {
+                } else {
                     CopyOnWriteArrayList<String> sessions = activeUserSessions.get(userId);
                     if (sessions != null && !sessions.isEmpty()) {
                         log.debug("User {} has {} active sessions", userId, sessions.size());
@@ -119,8 +119,8 @@ public class RealTimeMessageService {
     }
 
     @Async("messageThreadPoolTaskExecutor")
-    public CompletableFuture<Void> handleTypingIndicatorAsync(Long senderId, Long receiverId, boolean isTyping) {
-        return CompletableFuture.runAsync(() -> {
+    public void handleTypingIndicatorAsync(Long senderId, Long receiverId, boolean isTyping) {
+        CompletableFuture.runAsync(() -> {
             try {
                 log.debug("User {} {} typing to user {}", senderId, isTyping ? "started" : "stopped", receiverId);
                 CopyOnWriteArrayList<String> receiverSessions = activeUserSessions.get(receiverId);
@@ -146,9 +146,7 @@ public class RealTimeMessageService {
         return CompletableFuture.runAsync(() -> {
             try {
                 log.info("Broadcasting message to {} users", userIds.size());
-                userIds.parallelStream().forEach(userId -> {
-                    sendRealTimeNotificationAsync(userId, messageData);
-                });
+                userIds.parallelStream().forEach(userId -> sendRealTimeNotificationAsync(userId, messageData));
                 log.info("Message broadcast completed");
             } catch (Exception e) {
                 log.error("Error broadcasting message", e);
@@ -157,10 +155,10 @@ public class RealTimeMessageService {
     }
 
     public CompletableFuture<Integer> getOnlineUsersCountAsync() {
-        return CompletableFuture.supplyAsync(() -> {
-            return activeUserSessions.size();
-        });
-    }    public CompletableFuture<Boolean> isUserOnlineAsync(Long userId) {
+        return CompletableFuture.supplyAsync(activeUserSessions::size);
+    }
+
+    public CompletableFuture<Boolean> isUserOnlineAsync(Long userId) {
         return CompletableFuture.supplyAsync(() -> {
             CopyOnWriteArrayList<String> userSessions = activeUserSessions.get(userId);
             boolean isOnline = userSessions != null && !userSessions.isEmpty();

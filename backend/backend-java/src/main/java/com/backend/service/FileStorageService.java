@@ -15,46 +15,46 @@ import java.util.UUID;
 @Service
 @Slf4j
 public class FileStorageService {
-    
+
     @Value("${file.upload.dir:uploads}")
     private String uploadDir;
-    
+
     public String storeFile(MultipartFile file, String mediaType) throws IOException {
         if (file.isEmpty()) {
             throw new IOException("Cannot store empty file");
         }
-        
+
         Path uploadPath = Paths.get(uploadDir, mediaType);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
-        
+
         String originalFilename = file.getOriginalFilename();
         String fileExtension = "";
         if (originalFilename != null && originalFilename.contains(".")) {
             fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
         }
-        
+
         String uniqueFilename = UUID.randomUUID() + fileExtension;
-        
+
         Path filePath = uploadPath.resolve(uniqueFilename);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-        
+
         log.info("File stored successfully: {}", filePath);
-        
+
         return uniqueFilename;
     }
-    
+
     public byte[] loadFile(String mediaType, String filename) throws IOException {
         Path filePath = Paths.get(uploadDir, mediaType, filename);
-        
+
         if (!Files.exists(filePath)) {
             throw new IOException("File not found: " + filename);
         }
-        
+
         return Files.readAllBytes(filePath);
     }
-    
+
     public boolean deleteFile(String mediaType, String filename) {
         try {
             Path filePath = Paths.get(uploadDir, mediaType, filename);
@@ -71,13 +71,13 @@ public class FileStorageService {
             return false;
         }
     }
-    
+
     public String getContentType(String filename) {
         String extension = "";
         if (filename != null && filename.contains(".")) {
             extension = filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
         }
-        
+
         return switch (extension) {
             case "jpg", "jpeg" -> "image/jpeg";
             case "png" -> "image/png";
@@ -89,13 +89,13 @@ public class FileStorageService {
             default -> "application/octet-stream";
         };
     }
-    
+
     public boolean fileExists(String mediaType, String filename) {
         Path filePath = Paths.get(uploadDir, mediaType, filename);
         return Files.exists(filePath);
     }
-    
+
     public String getPublicUrl(String mediaType, String filename) {
         return "/server/" + mediaType + "/" + filename;
     }
-} 
+}

@@ -11,16 +11,16 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Relations {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ID")
     private Long id;
-    
+
     @OneToOne
     @JoinColumn(name = "ANIMALID", referencedColumnName = "ANIMALID")
     private Animal animal;
-    
+
     @Column(name = "FRIENDWITH", length = 4000)
     private String friendWith;
-} 
+}

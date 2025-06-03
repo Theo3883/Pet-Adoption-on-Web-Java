@@ -8,19 +8,19 @@ import lombok.Data;
 
 @Data
 public class AnimalRequest {
-    
+
     @NotBlank(message = "Animal name is required")
     @Size(max = 100, message = "Name must not exceed 100 characters")
     private String name;
-    
+
     @Size(max = 100, message = "Breed must not exceed 100 characters")
     private String breed;
-    
+
     @Size(max = 100, message = "Species must not exceed 100 characters")
     private String species;
-    
+
     private Integer age;
-    
+
     @NotNull(message = "Gender is required")
     private Animal.Gender gender;
-} 
+}

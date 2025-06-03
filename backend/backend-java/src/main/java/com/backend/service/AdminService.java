@@ -13,25 +13,26 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Transactional
 public class AdminService {
-    
+
     private final AdminRepository adminRepository;
     private final JwtService jwtService;
-      public String authenticateAdmin(String email, String password) {
+
+    public String authenticateAdmin(String email, String password) {
         Optional<Admin> adminOpt = adminRepository.findByEmail(email);
-        
+
         if (adminOpt.isEmpty()) {
             throw AuthenticationException.invalidCredentials();
         }
-        
+
         Admin admin = adminOpt.get();
         if (!password.equals(admin.getPassword())) {
             throw AuthenticationException.invalidCredentials();
         }
-        
+
         return jwtService.generateToken(admin.getAdminId(), admin.getEmail(), true);
     }
-    
+
     public Optional<Admin> findById(Long adminId) {
         return adminRepository.findById(adminId);
     }
-} 
+}
