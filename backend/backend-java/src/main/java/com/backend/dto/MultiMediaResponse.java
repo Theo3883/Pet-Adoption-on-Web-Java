@@ -16,11 +16,9 @@ public class MultiMediaResponse {
     @JsonProperty("URL")
     public String getURL() {
         return url;
-    }
-
-    @JsonProperty("pipeUrl")
+    }    @JsonProperty("pipeUrl")
     public String getPipeUrl() {
-        return url;
+        return "/media/pipe/" + id;
     }
 
     private String description;

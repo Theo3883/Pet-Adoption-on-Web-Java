@@ -11,6 +11,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -18,6 +22,9 @@ public class FileStorageService {
 
     @Value("${file.upload.dir:uploads}")
     private String uploadDir;
+    
+    private final Map<String, byte[]> fileCache = new ConcurrentHashMap<>();
+    private final Map<String, ReentrantLock> fileLocks = new ConcurrentHashMap<>();
 
     public String storeFile(MultipartFile file, String mediaType) throws IOException {
         if (file.isEmpty()) {
@@ -46,24 +53,77 @@ public class FileStorageService {
     }
 
     public byte[] loadFile(String mediaType, String filename) throws IOException {
-        Path filePath = Paths.get(uploadDir, mediaType, filename);
-
-        if (!Files.exists(filePath)) {
-            throw new IOException("File not found: " + filename);
+        String cacheKey = mediaType + "_" + filename;
+        
+        byte[] fileContent = fileCache.get(cacheKey);
+        if (fileContent != null) {
+            log.info("File loaded from cache: {}", filename);
+            return fileContent;
         }
 
-        return Files.readAllBytes(filePath);
+        ReentrantLock lock = fileLocks.computeIfAbsent(cacheKey, k -> new ReentrantLock());
+        lock.lock();
+        try {
+            fileContent = fileCache.get(cacheKey);
+            if (fileContent != null) {
+                log.info("File loaded from cache (after lock): {}", filename);
+                return fileContent;
+            }
+            
+            Path relativeFilePath = Paths.get(uploadDir, mediaType, filename);
+            if (Files.exists(relativeFilePath)) {
+                fileContent = Files.readAllBytes(relativeFilePath);
+                fileCache.put(cacheKey, fileContent);
+                log.info("File loaded from relative path: {}", relativeFilePath);
+                return fileContent;
+            }
+            
+            log.warn("File not found at expected paths. Relative path: {}", relativeFilePath);
+            
+            try {
+                Path mediaTypePath = Paths.get(uploadDir, mediaType);
+                if (Files.exists(mediaTypePath)) {
+                    try (var files = Files.list(mediaTypePath)) {
+                        Optional<Path> matchedFile = files
+                            .filter(p -> p.getFileName().toString().equalsIgnoreCase(filename))
+                            .findFirst();
+                        
+                        if (matchedFile.isPresent()) {
+                            fileContent = Files.readAllBytes(matchedFile.get());
+                            fileCache.put(cacheKey, fileContent);
+                            log.info("Found alternative file in relative path: {}", matchedFile.get());
+                            return fileContent;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Error searching for alternative file: {}", e.getMessage());
+            }
+            
+            throw new IOException("File not found: " + filename);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public boolean deleteFile(String mediaType, String filename) {
         try {
-            Path filePath = Paths.get(uploadDir, mediaType, filename);
-            if (Files.exists(filePath)) {
-                Files.delete(filePath);
-                log.info("File deleted successfully: {}", filePath);
+            Path relativeFilePath = Paths.get(uploadDir, mediaType, filename);
+            boolean deleted = false;
+            
+            if (Files.exists(relativeFilePath)) {
+                Files.delete(relativeFilePath);
+                log.info("File deleted successfully from relative path: {}", relativeFilePath);
+                deleted = true;
+            }
+            
+            if (deleted) {
+                String cacheKey = mediaType + "_" + filename;
+                fileCache.remove(cacheKey);
+                fileLocks.remove(cacheKey);
                 return true;
             } else {
-                log.warn("File not found, cannot delete: {}", filePath);
+                log.warn("File not found in any path, cannot delete: {}", filename);
                 return false;
             }
         } catch (IOException e) {
@@ -91,8 +151,8 @@ public class FileStorageService {
     }
 
     public boolean fileExists(String mediaType, String filename) {
-        Path filePath = Paths.get(uploadDir, mediaType, filename);
-        return Files.exists(filePath);
+        Path relativeFilePath = Paths.get(uploadDir, mediaType, filename);
+        return Files.exists(relativeFilePath);
     }
 
     public String getPublicUrl(String mediaType, String filename) {

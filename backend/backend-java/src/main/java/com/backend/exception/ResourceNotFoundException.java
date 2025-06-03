@@ -40,9 +40,11 @@ public class ResourceNotFoundException extends BaseException {
 
     public static ResourceNotFoundException medicalHistoryNotFound(Long animalId) {
         return new ResourceNotFoundException(String.format("Medical history for animal ID %d not found", animalId));
+    }    public static ResourceNotFoundException multimediaNotFound(Long animalId) {
+        return new ResourceNotFoundException(String.format("Multimedia for animal ID %d not found", animalId));
     }
 
-    public static ResourceNotFoundException multimediaNotFound(Long animalId) {
-        return new ResourceNotFoundException(String.format("Multimedia for animal ID %d not found", animalId));
+    public static ResourceNotFoundException mediaNotFound(Long mediaId) {
+        return new ResourceNotFoundException(String.format("Media with ID %d not found", mediaId));
     }
 }
