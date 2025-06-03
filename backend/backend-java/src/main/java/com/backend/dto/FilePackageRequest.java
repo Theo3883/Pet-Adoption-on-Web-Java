@@ -25,6 +25,8 @@ public class FilePackageRequest {
     @Size(max = 1000, message = "Description must not exceed 1000 characters")
     private String description;
     
+    @Builder.Default
     private boolean includeMetadata = true;
+    @Builder.Default
     private boolean compressPackage = false;
 } 

@@ -112,10 +112,8 @@ public class AnimalService {
         }
         
         if (feedingScheduleRequests != null && !feedingScheduleRequests.isEmpty()) {
-            // Only create one feeding schedule per animal (as per database constraint)
             FeedingScheduleCreationRequest request = feedingScheduleRequests.get(0);
             
-            // Use custom method to insert with proper VARRAY handling
             insertFeedingScheduleWithVArray(animalId, request.getFeedingTimes(), request.getFoodType(), request.getNotes());
             log.info("Added feeding schedule for animal ID: {}", animalId);
         }
@@ -140,14 +138,12 @@ public class AnimalService {
         for (int i = 0; i < feedingTimes.size() && i < 10; i++) { 
             String timeStr = feedingTimes.get(i);
             
-            // Convert HH:MM to HH:MM:SS format if needed
             String formattedTime = normalizeTimeFormat(timeStr);
             
             if (formattedTime != null && !formattedTime.isEmpty()) {
                 if (hasValidTimes) {
                     varrayConstructor.append(", ");
                 }
-                // Use VARCHAR2 format since the VARRAY is defined as VARCHAR2(50)
                 varrayConstructor.append("'").append(formattedTime).append("'");
                 hasValidTimes = true;
             }
@@ -297,16 +293,15 @@ public class AnimalService {
             feedingScheduleData = feedingScheduleRepository.findFeedingScheduleWithExtractedTimes(animalId);
         } catch (Exception e) {
             log.warn("Failed to retrieve feeding schedule with VARRAY extraction for animal {}, using fallback", animalId);
-            // Fallback: use simple repository method
             try {
                 Optional<FeedingSchedule> feedingScheduleOpt = feedingScheduleRepository.findByAnimalAnimalId(animalId);
                 if (feedingScheduleOpt.isPresent()) {
                     FeedingSchedule fs = feedingScheduleOpt.get();
-                    // Create a mock Object[] array to match the expected format
+
                     Object[] mockData = new Object[]{
                         fs.getId(),
                         animalId,
-                        fs.getFeedingTime(), // This will be the raw string
+                        fs.getFeedingTime(),
                         fs.getFoodType(),
                         fs.getNotes()
                     };
@@ -367,7 +362,7 @@ public class AnimalService {
         if (animal.getUser() != null) {
             response.setOwner(convertToUserResponse(animal.getUser()));
             if (animal.getUser().getAddress() != null) {
-                // Convert address to List
+
                 List<AddressResponse> addressList = List.of(convertToAddressResponse(animal.getUser().getAddress()));
                 response.setAddress(addressList);
             } else {
@@ -493,7 +488,6 @@ public class AnimalService {
             return "";
         }
         
-        // If it's already in HH:MM:SS format, return as is
         if (timestampOrTime.matches("\\d{1,2}:\\d{2}:\\d{2}")) {
             return timestampOrTime;
         }

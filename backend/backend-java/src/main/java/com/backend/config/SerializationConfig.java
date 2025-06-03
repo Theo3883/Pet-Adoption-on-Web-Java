@@ -15,13 +15,9 @@ public class SerializationConfig {
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         
-        // Configure for Java 8 time support
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        
-        // Configure for better cross-platform compatibility
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
         
         return mapper;
     }

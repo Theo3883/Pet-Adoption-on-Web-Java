@@ -15,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -31,31 +30,23 @@ public class CrossPlatformFileExchangeController {
     private final JwtService jwtService;
     private final ObjectMapper objectMapper;
     
-    /**
-     * Export files as a downloadable package
-     */
     @PostMapping("/api/files/export")
     public ResponseEntity<?> exportFilePackage(
             @Valid @RequestBody FilePackageRequest request,
             HttpServletRequest httpRequest) {
         
         try {
-            // Extract user ID from JWT token
             Long userId = extractUserIdFromToken(httpRequest);
             if (userId == null) {
                 return ResponseEntity.status(401).body(createErrorResponse("Authentication required"));
             }
             
             log.info("Exporting {} files for user {}", request.getFileIds().size(), userId);
-            
-            // Create file package
             SerializableFilePackage filePackage = exchangeService.exportFilePackage(request, userId);
             
-            // Convert to JSON
             String jsonContent = objectMapper.writeValueAsString(filePackage);
             byte[] packageData = jsonContent.getBytes();
             
-            // Compress if requested
             if (request.isCompressPackage()) {
                 packageData = exchangeService.compressData(packageData);
             }
@@ -86,22 +77,17 @@ public class CrossPlatformFileExchangeController {
         }
     }
     
-    /**
-     * Get export package as JSON (for API integration)
-     */
     @PostMapping("/api/files/export/json")
     public ResponseEntity<?> exportFilePackageAsJson(
             @Valid @RequestBody FilePackageRequest request,
             HttpServletRequest httpRequest) {
         
         try {
-            // Extract user ID from JWT token
             Long userId = extractUserIdFromToken(httpRequest);
             if (userId == null) {
                 return ResponseEntity.status(401).body(createErrorResponse("Authentication required"));
             }
             
-            // Create file package
             SerializableFilePackage filePackage = exchangeService.exportFilePackage(request, userId);
             
             Map<String, Object> response = new HashMap<>();
@@ -117,9 +103,6 @@ public class CrossPlatformFileExchangeController {
         }
     }
     
-    /**
-     * Import files from uploaded package
-     */
     @PostMapping("/api/files/import")
     public ResponseEntity<?> importFilePackage(
             @RequestParam("packageFile") MultipartFile packageFile,
@@ -127,7 +110,6 @@ public class CrossPlatformFileExchangeController {
             HttpServletRequest httpRequest) {
         
         try {
-            // Extract user ID from JWT token
             Long userId = extractUserIdFromToken(httpRequest);
             if (userId == null) {
                 return ResponseEntity.status(401).body(createErrorResponse("Authentication required"));
@@ -138,20 +120,14 @@ public class CrossPlatformFileExchangeController {
             }
             
             log.info("Importing file package for user {}", userId);
-            
-            // Read package data
             byte[] packageData = packageFile.getBytes();
             
-            // Decompress if necessary
             if (isCompressed) {
                 packageData = exchangeService.decompressData(packageData);
             }
             
-            // Parse JSON to SerializableFilePackage
             String jsonContent = new String(packageData);
             SerializableFilePackage filePackage = objectMapper.readValue(jsonContent, SerializableFilePackage.class);
-            
-            // Import files
             Map<String, Object> importResult = exchangeService.importFilePackage(filePackage, userId);
             
             Map<String, Object> response = new HashMap<>();
@@ -167,24 +143,18 @@ public class CrossPlatformFileExchangeController {
         }
     }
     
-    /**
-     * Import files from JSON package (for API integration)
-     */
     @PostMapping("/api/files/import/json")
     public ResponseEntity<?> importFilePackageFromJson(
             @RequestBody SerializableFilePackage filePackage,
             HttpServletRequest httpRequest) {
         
         try {
-            // Extract user ID from JWT token
             Long userId = extractUserIdFromToken(httpRequest);
             if (userId == null) {
                 return ResponseEntity.status(401).body(createErrorResponse("Authentication required"));
             }
             
             log.info("Importing file package from JSON for user {}", userId);
-            
-            // Import files
             Map<String, Object> importResult = exchangeService.importFilePackage(filePackage, userId);
             
             Map<String, Object> response = new HashMap<>();
@@ -200,9 +170,6 @@ public class CrossPlatformFileExchangeController {
         }
     }
     
-    /**
-     * Get package information without importing
-     */
     @PostMapping("/api/files/package/info")
     public ResponseEntity<?> getPackageInfo(
             @RequestParam("packageFile") MultipartFile packageFile,
@@ -210,7 +177,6 @@ public class CrossPlatformFileExchangeController {
             HttpServletRequest httpRequest) {
         
         try {
-            // Extract user ID from JWT token
             Long userId = extractUserIdFromToken(httpRequest);
             if (userId == null) {
                 return ResponseEntity.status(401).body(createErrorResponse("Authentication required"));
@@ -220,7 +186,6 @@ public class CrossPlatformFileExchangeController {
                 return ResponseEntity.badRequest().body(createErrorResponse("No package file uploaded"));
             }
             
-            // Read and parse package
             byte[] packageData = packageFile.getBytes();
             if (isCompressed) {
                 packageData = exchangeService.decompressData(packageData);
@@ -229,7 +194,6 @@ public class CrossPlatformFileExchangeController {
             String jsonContent = new String(packageData);
             SerializableFilePackage filePackage = objectMapper.readValue(jsonContent, SerializableFilePackage.class);
             
-            // Create info response (without file content)
             Map<String, Object> packageInfo = new HashMap<>();
             packageInfo.put("packageId", filePackage.getPackageId());
             packageInfo.put("packageName", filePackage.getPackageName());
@@ -244,7 +208,6 @@ public class CrossPlatformFileExchangeController {
             packageInfo.put("includesMetadata", filePackage.isIncludesMetadata());
             packageInfo.put("supportedFormats", filePackage.getSupportedFormats());
             
-            // File summary (without content)
             if (filePackage.getFiles() != null) {
                 packageInfo.put("fileSummary", filePackage.getFiles().stream()
                     .map(file -> Map.of(
@@ -268,22 +231,17 @@ public class CrossPlatformFileExchangeController {
         }
     }
     
-    /**
-     * Export package metadata only (for preview)
-     */
     @PostMapping("/api/files/export/preview")
     public ResponseEntity<?> exportPackagePreview(
             @Valid @RequestBody FilePackageRequest request,
             HttpServletRequest httpRequest) {
         
         try {
-            // Extract user ID from JWT token
             Long userId = extractUserIdFromToken(httpRequest);
             if (userId == null) {
                 return ResponseEntity.status(401).body(createErrorResponse("Authentication required"));
             }
             
-            // Create preview request (no file content)
             FilePackageRequest previewRequest = FilePackageRequest.builder()
                 .fileIds(request.getFileIds())
                 .packageName(request.getPackageName())
@@ -292,11 +250,8 @@ public class CrossPlatformFileExchangeController {
                 .compressPackage(false)
                 .build();
             
-            // This would need to be modified to create a preview without file content
-            // For now, we'll create the full package but indicate it's a preview
             SerializableFilePackage filePackage = exchangeService.exportFilePackage(previewRequest, userId);
             
-            // Remove file content for preview
             if (filePackage.getFiles() != null) {
                 filePackage.getFiles().forEach(file -> file.setFileContent(null));
             }
@@ -315,9 +270,6 @@ public class CrossPlatformFileExchangeController {
         }
     }
     
-    /**
-     * Extract user ID from JWT token
-     */
     private Long extractUserIdFromToken(HttpServletRequest request) {
         try {
             String authHeader = request.getHeader("Authorization");
@@ -331,9 +283,6 @@ public class CrossPlatformFileExchangeController {
         return null;
     }
     
-    /**
-     * Create error response
-     */
     private Map<String, Object> createErrorResponse(String message) {
         Map<String, Object> error = new HashMap<>();
         error.put("success", false);

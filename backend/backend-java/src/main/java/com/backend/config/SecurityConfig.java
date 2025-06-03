@@ -26,10 +26,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                // Public endpoints (no authentication required)
+                // Public endpoints
                 .requestMatchers("/users/login", "/users/signup", "/admin/login").permitAll()
                 .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
-                // All other endpoints allow access (authentication handled in controllers)
                 .anyRequest().permitAll()
             );
         

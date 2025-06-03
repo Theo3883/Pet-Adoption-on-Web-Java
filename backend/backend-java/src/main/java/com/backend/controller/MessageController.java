@@ -161,9 +161,7 @@ public class MessageController {
 
             CompletableFuture<Long> unreadCountFuture = messageService.getUnreadCountAsync(userId);
 
-            CompletableFuture<Void> allOperations = CompletableFuture.allOf(
-                    conversationsFuture, unreadCountFuture);
-
+            CompletableFuture<Void> allOperations = CompletableFuture.allOf(conversationsFuture, unreadCountFuture);
             allOperations.join();
 
             List<Map<String, Object>> conversations = conversationsFuture.get();
@@ -383,7 +381,9 @@ public class MessageController {
             error.put("error", "Internal Server Error");
             return ResponseEntity.status(500).body(error);
         }
-    }    @GetMapping("/messages/online-status/{userId}")
+    }    
+    
+    @GetMapping("/messages/online-status/{userId}")
     public ResponseEntity<?> getOnlineStatus(@PathVariable Long userId, HttpServletRequest httpRequest) {
         try {
             Long requesterId = extractUserIdFromToken(httpRequest);
@@ -428,7 +428,8 @@ public class MessageController {
             }
 
             CompletableFuture<Integer> countFuture = realTimeMessageService.getOnlineUsersCountAsync();
-            Integer count = countFuture.get();            Map<String, Object> response = new HashMap<>();
+            Integer count = countFuture.get();            
+            Map<String, Object> response = new HashMap<>();
             response.put("onlineCount", count);
             return ResponseEntity.ok(response);
 
@@ -452,10 +453,7 @@ public class MessageController {
 
             log.info("Force offline request received for user: {}", userId);
             
-            // Force the user to be offline
             realTimeMessageService.notifyUserOnlineStatusAsync(userId, false).join();
-            
-            // Clean up any lingering sessions
             realTimeMessageService.cleanupInactiveSessionsAsync().join();
             
             Map<String, Object> response = new HashMap<>();

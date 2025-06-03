@@ -24,13 +24,11 @@ public class FileStorageService {
             throw new IOException("Cannot store empty file");
         }
         
-        // Create upload directory if it doesn't exist
         Path uploadPath = Paths.get(uploadDir, mediaType);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
         
-        // Generate unique filename
         String originalFilename = file.getOriginalFilename();
         String fileExtension = "";
         if (originalFilename != null && originalFilename.contains(".")) {

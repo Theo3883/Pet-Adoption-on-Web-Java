@@ -25,7 +25,6 @@ public class UserController {
     @PostMapping("/users/signup")
     public ResponseEntity<?> signUp(@RequestBody UserSignupRequest request) {
         try {
-            // Check for missing required fields like in Node.js
             if (request.getFirstName() == null || request.getFirstName().trim().isEmpty() ||
                     request.getLastName() == null || request.getLastName().trim().isEmpty() ||
                     request.getEmail() == null || request.getEmail().trim().isEmpty() ||
@@ -37,7 +36,7 @@ public class UserController {
                 return ResponseEntity.status(400).body(error);
             }
 
-            UserResponse user = userService.createUser(request);
+            userService.createUser(request);
 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "User and address created successfully");
@@ -57,7 +56,6 @@ public class UserController {
     @PostMapping("/users/login")
     public ResponseEntity<?> login(@RequestBody UserLoginRequest request) {
         try {
-            // Check if email and password are provided
             if (request.getEmail() == null || request.getEmail().trim().isEmpty() ||
                     request.getPassword() == null || request.getPassword().trim().isEmpty()) {
                 Map<String, String> error = new HashMap<>();
@@ -87,7 +85,6 @@ public class UserController {
     @GetMapping("/users/all/details")
     public ResponseEntity<?> getAllUsersWithDetails(HttpServletRequest httpRequest) {
         try {
-            // Check if user is authenticated and is admin
             String authHeader = httpRequest.getHeader("Authorization");
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 Map<String, String> error = new HashMap<>();
@@ -115,7 +112,6 @@ public class UserController {
     @DeleteMapping("/users/delete")
     public ResponseEntity<?> deleteUser(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
         try {
-            // Check if user is authenticated and is admin
             String authHeader = httpRequest.getHeader("Authorization");
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 Map<String, String> error = new HashMap<>();

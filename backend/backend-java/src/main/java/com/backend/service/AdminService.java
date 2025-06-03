@@ -24,7 +24,6 @@ public class AdminService {
         }
         
         Admin admin = adminOpt.get();
-        // Plain text password comparison
         if (!password.equals(admin.getPassword())) {
             throw new RuntimeException("Invalid email or password");
         }

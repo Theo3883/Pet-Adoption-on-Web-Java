@@ -1,8 +1,6 @@
 package com.backend.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -36,7 +34,6 @@ public class FeedingSchedule {
     @Column(name = "NOTES", length = 4000)
     private String notes;
     
-    // Helper methods for feeding times
     @Transient
     public List<String> getFeedingTimes() {
         if (feedingTime == null || feedingTime.trim().isEmpty()) {
