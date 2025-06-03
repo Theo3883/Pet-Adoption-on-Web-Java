@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -53,11 +52,11 @@ public class MessageService {
         return savedMessage.getMessageId();
     }
     @Async("messageThreadPoolTaskExecutor")
-    public CompletableFuture<Void> processMessageAsync(Long messageId, Long senderId, Long receiverId) {
-        return CompletableFuture.runAsync(() -> {
+    public void processMessageAsync(Long messageId, Long senderId, Long receiverId) {
+        CompletableFuture.runAsync(() -> {
             try {
                 log.info("Message processing completed for message {}", messageId);
-                
+
             } catch (Exception e) {
                 log.error("Error processing message {} asynchronously", messageId, e);
             }
@@ -84,7 +83,7 @@ public class MessageService {
                     messageMap.put("RECEIVERLASTNAME", message.getReceiver().getLastName());
                     
                     return messageMap;
-                }).collect(Collectors.toList());
+                }).toList();
             } catch (Exception e) {
                 log.error("Error loading conversation for users {} and {}", userId, otherUserId, e);
                 throw new CompletionException(e);
@@ -110,7 +109,7 @@ public class MessageService {
             messageMap.put("RECEIVERLASTNAME", message.getReceiver().getLastName());
             
             return messageMap;
-        }).collect(Collectors.toList());
+        }).toList();
     }
     
     public CompletableFuture<List<Map<String, Object>>> getConversationsAsync(Long userId) {
@@ -173,7 +172,7 @@ public class MessageService {
                 return conversationMap.values().stream()
                         .sorted((a, b) -> ((LocalDateTime) b.get("LASTMESSAGETIME"))
                                 .compareTo((LocalDateTime) a.get("LASTMESSAGETIME")))
-                        .collect(Collectors.toList());
+                                .toList();
                         
             } catch (Exception e) {
                 log.error("Error loading conversations for user {}", userId, e);
@@ -229,12 +228,12 @@ public class MessageService {
         return conversationMap.values().stream()
                 .sorted((a, b) -> ((LocalDateTime) b.get("LASTMESSAGETIME"))
                         .compareTo((LocalDateTime) a.get("LASTMESSAGETIME")))
-                .collect(Collectors.toList());
+                .toList();
     }
     
     @Async("messageThreadPoolTaskExecutor")
-    public CompletableFuture<Void> markAsReadAsync(Long userId, Long otherUserId) {
-        return CompletableFuture.runAsync(() -> {
+    public void markAsReadAsync(Long userId, Long otherUserId) {
+        CompletableFuture.runAsync(() -> {
             try {
                 messageRepository.markAsRead(userId, otherUserId);
                 log.info("Messages marked as read for user {} from user {}", userId, otherUserId);
