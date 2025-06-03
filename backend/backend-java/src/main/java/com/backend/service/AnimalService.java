@@ -324,11 +324,11 @@ public class AnimalService {
 
         response.setMultimedia(multimedia.stream()
                 .map(this::convertToMultiMediaResponse)
-                .collect(Collectors.toList()));
+                .toList());
 
         response.setMedicalHistory(medicalHistories.stream()
                 .map(this::convertToMedicalHistoryResponse)
-                .collect(Collectors.toList()));
+                .toList());
 
         if (!feedingScheduleData.isEmpty()) {
             Object[] data = feedingScheduleData.getFirst();
@@ -380,7 +380,7 @@ public class AnimalService {
         return animalRepository.findBySpecies(species)
                 .stream()
                 .map(this::convertToAnimalResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public void incrementViews(Long animalId) {
@@ -404,7 +404,7 @@ public class AnimalService {
         return animalRepository.findTopAnimalsByCity(city)
                 .stream()
                 .map(this::convertToAnimalResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public List<Object[]> getPopularBreedsBySpecies(String species) {
